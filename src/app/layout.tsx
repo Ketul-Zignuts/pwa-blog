@@ -9,6 +9,7 @@ import '@/app/globals.css'
 
 // Generated Icon CSS Imports
 import '@assets/iconify-icons/generated-icons.css'
+import Providers from '@/components/Providers'
 
 export const metadata = {
   title: 'Materio - Material Design Next.js Admin Template',
@@ -22,7 +23,11 @@ const RootLayout = ({ children }: ChildrenType) => {
 
   return (
     <html id='__next' lang='en' dir={direction}>
-      <body className='flex is-full min-bs-full flex-auto flex-col'>{children}</body>
+      <body className='flex is-full min-bs-full flex-auto flex-col'>
+        <Providers direction='ltr'>
+          {children}
+        </Providers>
+      </body>
     </html>
   )
 }

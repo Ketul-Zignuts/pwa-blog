@@ -8,6 +8,10 @@ import ThemeProvider from '@components/theme'
 
 // Util Imports
 import { getMode, getSettingsFromCookie, getSystemMode } from '@core/utils/serverHelpers'
+import ReduxProvider from '@/store/ReduxProvider'
+import { PersistGate } from 'redux-persist/integration/react'
+import { persistor } from '@/store'
+import QueryProvider from './QueryProvider'
 
 type Props = ChildrenType & {
   direction: Direction
@@ -21,12 +25,17 @@ const Providers = (props: Props) => {
   const mode = getMode()
   const settingsCookie = getSettingsFromCookie()
   const systemMode = getSystemMode()
+  console.log('mode: ', mode,settingsCookie,systemMode);
 
   return (
     <VerticalNavProvider>
       <SettingsProvider settingsCookie={settingsCookie} mode={mode}>
         <ThemeProvider direction={direction} systemMode={systemMode}>
-          {children}
+          <QueryProvider>
+            <ReduxProvider>
+                {children}
+            </ReduxProvider>
+          </QueryProvider>
         </ThemeProvider>
       </SettingsProvider>
     </VerticalNavProvider>
