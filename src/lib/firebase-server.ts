@@ -2,6 +2,7 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'  // ← ADD FieldValue
 import { getAuth } from 'firebase-admin/auth'
+import { getStorage } from 'firebase-admin/storage'
 
 if (getApps().length === 0) {
   initializeApp({
@@ -15,4 +16,6 @@ if (getApps().length === 0) {
 
 export const adminDb = getFirestore()
 export const adminAuth = getAuth()
-export { FieldValue }  // ← EXPORT FieldValue
+export const adminStorage = getStorage()
+
+export { FieldValue }

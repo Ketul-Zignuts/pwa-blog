@@ -25,7 +25,6 @@ const Providers = (props: Props) => {
   const mode = getMode()
   const settingsCookie = getSettingsFromCookie()
   const systemMode = getSystemMode()
-  console.log('mode: ', mode,settingsCookie,systemMode);
 
   return (
     <VerticalNavProvider>

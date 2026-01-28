@@ -8,7 +8,7 @@ const reducer = combineReducers({
     {
       key: "auth",
       storage: storage,
-      keyPrefix: "estate-master-",
+      keyPrefix: "blog-master-",
       debug: false,
       whitelist: ["user", "token", "isAdminLoggedIn"],
       timeout: 20000,

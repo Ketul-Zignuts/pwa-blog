@@ -5,22 +5,28 @@ import type { PayloadAction } from '@reduxjs/toolkit'
 // Type Imports
 type UserProp = {
   user: any
+  token:string
+  isAdminLoggedIn:boolean
 }
 
 const initialState: UserProp = {
-  user : null
+  user : null,
+  token: '',
+  isAdminLoggedIn:false
 }
 
 export const authSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    saveUserData: (state, action: PayloadAction<any>) => {
-      state.user = action.payload
+    setAuthUser: (state, action: PayloadAction<any>) => {
+      state.user = action.payload.user
+      state.token = action.payload.token
+      state.isAdminLoggedIn = action.payload.token
     }
   }
 })
 
-export const { saveUserData } = authSlice.actions
+export const { setAuthUser } = authSlice.actions
 
 export default authSlice.reducer

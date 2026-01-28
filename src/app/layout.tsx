@@ -10,11 +10,13 @@ import '@/app/globals.css'
 // Generated Icon CSS Imports
 import '@assets/iconify-icons/generated-icons.css'
 import Providers from '@/components/Providers'
+  import { ToastContainer } from 'react-toastify';
+
 
 export const metadata = {
-  title: 'Materio - Material Design Next.js Admin Template',
+  title: 'Zignuts Blog-App',
   description:
-    'Materio - Material Design Next.js Admin Dashboard Template - is the most developer friendly & highly customizable Admin Dashboard Template based on MUI v5.'
+    'Zignuts Blog App'
 }
 
 const RootLayout = ({ children }: ChildrenType) => {
@@ -26,6 +28,7 @@ const RootLayout = ({ children }: ChildrenType) => {
       <body className='flex is-full min-bs-full flex-auto flex-col'>
         <Providers direction='ltr'>
           {children}
+          <ToastContainer />
         </Providers>
       </body>
     </html>
