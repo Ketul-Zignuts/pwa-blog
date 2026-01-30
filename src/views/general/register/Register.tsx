@@ -1,176 +1,106 @@
 'use client'
 
-// React Imports
-import { useState } from 'react'
-
-// Next Imports
 import Link from 'next/link'
-import { useParams } from 'next/navigation'
-
-// MUI Imports
-import Card from '@mui/material/Card'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import TextField from '@mui/material/TextField'
-import IconButton from '@mui/material/IconButton'
-import InputAdornment from '@mui/material/InputAdornment'
-import Button from '@mui/material/Button'
-import Divider from '@mui/material/Divider'
-
-// Type Imports
-import type { Mode } from '@core/types'
-
-
-// Component Imports
+import { useTheme } from '@mui/material/styles'
+import classnames from 'classnames'
+import RegisterField from '@/views/general/register/RegisterField'
 import Logo from '@components/layout/shared/Logo'
-import Illustrations from '@components/Illustrations'
-
-// Config Imports
-import themeConfig from '@configs/themeConfig'
-
-// Hook Imports
-import { useImageVariant } from '@core/hooks/useImageVariant'
+import { useSettings } from '@core/hooks/useSettings'
+import { Box, Button, CircularProgress, Grid } from '@mui/material'
+import { FormProvider, useForm } from 'react-hook-form'
 import { yupResolver } from '@hookform/resolvers/yup'
-import { loginSchema } from '@/constants/schema/general/loginSchema'
-import { Box } from '@mui/material'
-import { useForm } from 'react-hook-form'
-import CustomTextInput from '@/components/form/CustomTextInput'
+import { registerSchema } from '@/constants/schema/general/authSchema'
+import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
+import { registerAction } from '@/constants/api/auth'
+import { toast } from 'react-toastify'
+import { useRouter } from 'next/navigation'
 
-// Util Imports
-type LoginProps = {
-  email: string
-  password: string
+const defaultValues = {
+  email: '',
+  password: '',
+  displayName: '',
+  phoneNumber: '',
+  bio: '',
+  photoURL: null
 }
 
-const Register = ({ mode }: { mode: Mode }) => {
-  const [isPasswordShown, setIsPasswordShown] = useState(false)
-  const darkImg = '/images/pages/auth-v1-mask-dark.png'
-  const lightImg = '/images/pages/auth-v1-mask-light.png'
-  const authBackground = useImageVariant(mode, lightImg, darkImg)
+const Register = () => {
+  const theme = useTheme()
+  const router = useRouter();
+  const { settings } = useSettings()
 
-  const handleClickShowPassword = () => setIsPasswordShown(show => !show)
+  const methods = useForm({
+    mode: 'onChange',
+    defaultValues,
+    shouldFocusError: true,
+    resolver: yupResolver(registerSchema)
+  })
+  const { handleSubmit } = methods;
 
-  const {
-    control,
-    handleSubmit,
-    reset,
-    watch,
-    formState: { errors },
-  } = useForm({
-    resolver: yupResolver(loginSchema),
-    reValidateMode: 'onChange',
-    mode: 'all',
-    defaultValues: {
-      email: '',
-      password: ''
+  const { mutate,isPending } = useMutation({
+    mutationFn: (credentials) => registerAction(credentials),
+    onSuccess: async (response) => {
+      if (response?.success) {
+        toast.success(response?.message)
+        router.replace('/login');
+      } else {
+        const failMessage = response?.message || 'failed to register';
+        toast.error(failMessage)
+      }
     },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || 'Login failed!';
+      toast.error(message);
+    }
   });
-  console.log('errors: ', errors);
 
-  const onSubmit = async (data: LoginProps) => {
-    console.log('data: ', data);
-    //nothing for now
-  }
+  const onSubmit = async (data: any) => {
+    await mutate(data);
+  };
 
   return (
-    <div className='flex flex-col justify-center items-center min-bs-[100dvh] relative p-6'>
-      <Card className='flex flex-col sm:is-[450px]'>
-        <CardContent className='p-6 sm:!p-12'>
-          <Link href={'/'} className='flex justify-center items-center mbe-6'>
-            <Logo />
-          </Link>
-          <div className='flex flex-col gap-5'>
-            <div>
-              <Typography variant='h4'>{`Welcome to ${themeConfig.templateName}!👋🏻`}</Typography>
-              <Typography className='mbs-1'>Please sign-in to your account and start the adventure</Typography>
-            </div>
-            <Box className='flex flex-col gap-5'>
-
-              <CustomTextInput
-                control={control as any}
-                variant='outlined'
-                rules={{}}
-                errors={errors}
-                id='email'
-                name='email'
-                placeholder='Email'
-                label='Email'
-                type='text'
-              />
-              <CustomTextInput
-                id='password'
-                control={control}
-                name="password"
-                label="Password"
-                placeholder="Enter your password"
-                type={isPasswordShown ? 'text' : 'password'}
-                fullWidth
-                icon={<i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />}
-                onIconPress={handleClickShowPassword}
-                errors={errors}
-              />
-              <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
-                <Typography
-                  className='text-end'
-                  color='primary'
-                  component={Link}
-                  href={'/'}
-                >
-                  Forgot password?
-                </Typography>
-              </div>
-              <Button fullWidth variant='contained' type='button' onClick={handleSubmit(onSubmit)}>
-                Log In
-              </Button>
-              <div className='flex justify-center items-center flex-wrap gap-2'>
-                <Typography>New on our platform?</Typography>
-                <Typography
-                  component={Link}
-                  href={'/'}
-                  color='primary'
-                >
-                  Create an account
-                </Typography>
-              </div>
-              <Divider className='gap-3'>or</Divider>
-
+    <div className='flex bs-full justify-between items-center'>
+      <div
+        className={classnames('flex bs-full items-center justify-center is-[594px] max-md:hidden', {
+          'border-ie': settings.skin === 'bordered'
+        })}
+      >
+        <img
+          src='/images/illustrations/characters/4.png'
+          alt='multi-steps-character'
+          className={classnames('mis-[92px] bs-auto max-bs-[628px] max-is-full', {
+            'scale-x-[-1]': theme.direction === 'rtl'
+          })}
+        />
+      </div>
+      <div className='flex justify-center items-center bs-full is-full bg-backgroundPaper'>
+        <Link
+          href={'/'}
+          className='absolute block-start-5 sm:block-start-[25px] inline-start-6 sm:inline-start-[25px]'
+        >
+          <Logo />
+        </Link>
+        <FormProvider {...methods}>
+          <Box className='p-5 sm:p-8 is-[700px]'>
+            <RegisterField />
+            <Grid item xs={12} className='flex justify-between pt-5'>
               <Button
-                variant="contained"
-                startIcon={<i className="ri-google-fill text-base" style={{ color:'#131313' }} />}
-                sx={{
-                  backgroundColor: '#FFF',
-                  color: '#131313',
-                  borderRadius: '4px',
-                  height: '40px',
-                  padding: '0 24px',
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  fontSize: '14px',
-                  fontFamily: '"Roboto", "Segoe UI", sans-serif',
-                  boxShadow: '0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15)',
-                  '&:hover': {
-                    backgroundColor: '#FFF',
-                    boxShadow: '0 1px 3px 0 rgba(60,64,67,.3), 0 2px 6px 2px rgba(60,64,67,.15)',
-                    transform: 'translateY(-1px)'
-                  },
-                  '&:active': {
-                    boxShadow: '0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15)',
-                    transform: 'translateY(0)'
-                  },
-                  '& .MuiTouchRipple-root': {
-                    color: 'rgba(255,255,255,.3)'
-                  }
-                }}
-                disableRipple
+                color='primary'
+                variant='contained'
+                type='button'
+                disabled={isPending}
+                onClick={handleSubmit(onSubmit)}
+                size='medium'
+                fullWidth
+                startIcon={isPending ? <CircularProgress size={20} color='warning' /> : null}
               >
-                Log in with Google
+                Register
               </Button>
-
-            </Box>
-          </div>
-        </CardContent>
-      </Card>
-      <Illustrations maskImg={{ src: authBackground }} />
+            </Grid>
+          </Box>
+        </FormProvider>
+      </div>
     </div>
   )
 }

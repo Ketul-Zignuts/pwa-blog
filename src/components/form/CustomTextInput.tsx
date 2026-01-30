@@ -144,11 +144,11 @@ function CustomTextInput({
               }}
               InputProps={{
                 ...extraProps,
-                endAdornment: icon && onIconPress ? (
+                endAdornment: icon ? (
                   <InputAdornment position="end">
                     <IconButton
                       aria-label="toggle password visibility"
-                      onClick={onIconPress}
+                      onClick={() => onIconPress && onIconPress()}
                       onMouseDown={(e) => e.preventDefault()}
                       edge="end"
                       size="small"

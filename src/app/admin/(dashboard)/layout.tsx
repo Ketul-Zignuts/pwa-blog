@@ -20,6 +20,7 @@ import ScrollToTop from '@core/components/scroll-to-top'
 // Util Imports
 import { getMode, getSystemMode } from '@core/utils/serverHelpers'
 import AuthGuard from '@/guard/AuthGuard'
+import themeConfig from '@/configs/themeConfig'
 
 const Layout = async ({ children }: ChildrenType) => {
   // Vars
@@ -34,13 +35,13 @@ const Layout = async ({ children }: ChildrenType) => {
           <VerticalLayout
             navigation={<Navigation mode={mode} systemMode={systemMode} />}
             navbar={<Navbar />}
-            footer={<VerticalFooter />}
+            footer={themeConfig?.disableFooter ? null : <VerticalFooter />}
           >
             {children}
           </VerticalLayout>
         }
         horizontalLayout={
-          <HorizontalLayout header={<Header />} footer={<HorizontalFooter />}>
+          <HorizontalLayout header={<Header />} footer={themeConfig?.disableFooter ? null : <HorizontalFooter />}>
             {children}
           </HorizontalLayout>
         }

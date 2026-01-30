@@ -47,6 +47,7 @@ export type Config = {
   compactContentWidth: number
   footer: Footer
   disableRipple: boolean
+  disableFooter: boolean
 }
 
 const themeConfig: Config = {
@@ -72,7 +73,8 @@ const themeConfig: Config = {
     contentWidth: 'compact', // 'compact', 'wide'
     detached: true //! true, false (This will not work in the Horizontal Layout)
   },
-  disableRipple: false // true, false
+  disableRipple: false, // true, false
+  disableFooter: true
 }
 
 export default themeConfig

@@ -22,6 +22,8 @@ import menuItemStyles from '@core/styles/horizontal/menuItemStyles'
 import verticalNavigationCustomStyles from '@core/styles/vertical/navigationCustomStyles'
 import verticalMenuItemStyles from '@core/styles/vertical/menuItemStyles'
 import verticalMenuSectionStyles from '@core/styles/vertical/menuSectionStyles'
+import { GenerateHorizontalMenu } from '@/components/GenerateMenu'
+import horizontalMenuData from '@/data/navigation/horizontalMenuData'
 
 type RenderExpandIconProps = {
   level?: number
@@ -64,7 +66,7 @@ const HorizontalMenu = () => {
           skin === 'bordered' ? 'var(--mui-palette-background-paper)' : 'var(--mui-palette-background-default)'
       }}
     >
-      <Menu
+      {/* <Menu
         rootStyles={menuRootStyles(theme)}
         renderExpandIcon={({ level }) => <RenderExpandIcon level={level} />}
         renderExpandedMenuItemIcon={{ icon: <i className='ri-circle-line' /> }}
@@ -88,9 +90,9 @@ const HorizontalMenu = () => {
         <MenuItem href='/about' icon={<i className='ri-information-line' />}>
           About
         </MenuItem>
-      </Menu>
+      </Menu> */}
 
-      {/* <Menu
+      <Menu
         rootStyles={menuRootStyles(theme)}
         renderExpandIcon={({ level }) => <RenderExpandIcon level={level} />}
         renderExpandedMenuItemIcon={{ icon: <i className='ri-circle-line' /> }}
@@ -108,8 +110,8 @@ const HorizontalMenu = () => {
           menuSectionStyles: verticalMenuSectionStyles(verticalNavOptions, theme)
         }}
       >
-        <GenerateHorizontalMenu menuData={menuData(dictionary)} />
-      </Menu> */}
+        <GenerateHorizontalMenu menuData={horizontalMenuData()} />
+      </Menu>
     </HorizontalNav>
   )
 }

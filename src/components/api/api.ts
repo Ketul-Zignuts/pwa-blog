@@ -37,7 +37,7 @@ api.interceptors.response.use(
         const message = error?.response?.data?.message || '';
 
         if (
-            status === 403 &&
+            status === 401 &&
             (message.includes('Token expired') || message.includes('Invalid token'))
         ) {
             try {

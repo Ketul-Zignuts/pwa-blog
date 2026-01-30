@@ -1,145 +1,132 @@
-// app/api/register/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import { adminAuth, adminDb, adminStorage, FieldValue } from '@/lib/firebase-server'
-
-interface RegisterBody {
-  email: string
-  password?: string
-  displayName?: string
-  photoURL?: string
-  phoneNumber?: string
-}
+import { adminSupabase, adminStorage } from '@/lib/supabase-server'
 
 export async function POST(req: NextRequest) {
   try {
-    const body: RegisterBody = await req.json()
-    
-    const { email, password, displayName, photoURL, phoneNumber } = body
+    const body = await req.formData()
+
+    const email = body.get('email') as string
+    const password = body.get('password') as string
+    const displayName = body.get('displayName') as string
+    const phoneNumber = body.get('phoneNumber') as string
+    const photoURLFile = body.get('photoURL') as File | null
 
     if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 })
+      return NextResponse.json({ success: false, message: 'Email is required' })
     }
 
-    if (password && password.length < 6) {
-      return NextResponse.json({ error: 'Password must be at least 6 characters' }, { status: 400 })
+    if (!password || password.length < 6) {
+      return NextResponse.json({
+        success: false,
+        message: 'Password must be at least 6 characters'
+      })
     }
 
-    try {
-      await adminAuth.getUserByEmail(email)
-      return NextResponse.json({ error: 'User already exists' }, { status: 409 })
-    } catch (error) {
-      // User doesn't exist - good!
-      console.log(error)
+    // 🔎 Check if user already exists
+    const { data: existing } = await adminSupabase.auth.admin.listUsers()
+    const userExists = existing?.users?.some((u) => u.email === email)
+
+    if (userExists) {
+      return NextResponse.json({
+        success: false,
+        message: 'User already exists'
+      })
     }
 
+    // 📸 Upload profile image (optional)
     let finalPhotoURL = ''
 
-    // Handle profile image upload (base64 or Google OAuth URL)
-    if (photoURL) {
-      if (photoURL.startsWith('data:image/')) {
-        // Base64 image upload to Storage
-        finalPhotoURL = await uploadProfileImage(photoURL, email)
+    if (photoURLFile && photoURLFile.size > 0) {
+      const buffer = Buffer.from(await photoURLFile.arrayBuffer())
+      finalPhotoURL = await uploadProfileImage(
+        buffer,
+        email,
+        photoURLFile.type
+      )
+    }
+
+    // 📞 Format phone number
+    let formattedPhoneNumber: string | undefined
+
+    if (phoneNumber) {
+      const cleaned = phoneNumber.replace(/\D/g, '')
+
+      if (cleaned.length === 10) {
+        formattedPhoneNumber = `+91${cleaned}`
+      } else if (cleaned.length === 12 && cleaned.startsWith('91')) {
+        formattedPhoneNumber = `+${cleaned}`
+      } else if (phoneNumber.startsWith('+')) {
+        formattedPhoneNumber = phoneNumber
       } else {
-        // Google OAuth profile URL (already public)
-        finalPhotoURL = photoURL
+        return NextResponse.json({
+          success: false,
+          message: 'Invalid phone number format'
+        })
       }
     }
 
-    // Create user in Firebase Auth
-    const userRecord = await adminAuth.createUser({
-      email,
-      password: password || undefined,  // Skip for Google OAuth
-      displayName: displayName || email.split('@')[0],
-      photoURL: finalPhotoURL || undefined,
-      phoneNumber: phoneNumber || undefined,
+    // 👤 Create auth user
+    const { data: userRecord, error: createError } =
+      await adminSupabase.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: {
+          displayName: displayName || email.split('@')[0],
+          photoURL: finalPhotoURL,
+          phoneNumber: formattedPhoneNumber
+        }
+      })
+
+    if (createError || !userRecord?.user) {
+      throw new Error(createError?.message || 'Failed to create user')
+    }
+
+    // 🧾 Insert user profile (DB handles timestamps)
+    const { error: insertError } = await adminSupabase.from('users').insert({
+      uid: userRecord.user.id,
+      email: userRecord.user.email!,
+      displayName:
+        userRecord.user.user_metadata?.displayName ||
+        displayName ||
+        email.split('@')[0],
+      photoURL: finalPhotoURL,
+      phoneNumber: formattedPhoneNumber || ''
     })
 
-    // Create user profile in Firestore
-    await adminDb.collection('users').doc(userRecord.uid).set({
-      uid: userRecord.uid,
-      email: userRecord.email,
-      displayName: userRecord.displayName!,
-      photoURL: userRecord.photoURL || '',
-      phoneNumber: userRecord.phoneNumber || '',
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp(),
-      bio: '',
-      totalPosts: 0,
-      followers: 0,
-      following: 0,
-      isAdmin: false,
-    })
+    if (insertError) {
+      console.error('Profile insert error:', insertError)
+      throw new Error('Failed to create user profile')
+    }
 
-    // Generate session cookie
-    const customToken = await adminAuth.createCustomToken(userRecord.uid)
-    const idToken = await adminAuth.createSessionCookie(customToken, { 
-      expiresIn: 60 * 60 * 24 * 7 
-    })
-
-    const response = NextResponse.json({
+    return NextResponse.json({
       success: true,
-      message: 'User registered successfully',
-      user: {
-        uid: userRecord.uid,
-        email: userRecord.email,
-        displayName: userRecord.displayName,
-        photoURL: userRecord.photoURL,
-      }
+      message: 'User registered successfully! Please log in.'
     })
-
-    response.cookies.set('auth-token', idToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 60 * 60 * 24 * 7
-    })
-
-    return response
-
   } catch (error: any) {
     console.error('Register error:', error)
-    
-    if (error.code === 'auth/email-already-exists') {
-      return NextResponse.json({ error: 'Email already exists' }, { status: 409 })
-    }
-
-    return NextResponse.json(
-      { error: 'Registration failed', details: error.message }, 
-      { status: 500 }
-    )
+    return NextResponse.json({
+      success: false,
+      message: error.message || 'Registration failed'
+    })
   }
 }
 
-// Helper: Upload base64 image to Firebase Storage
-async function uploadProfileImage(base64Image: string, email: string): Promise<string> {
-  try {
-    // Extract image buffer from base64
-    const buffer = Buffer.from(base64Image.split(',')[1], 'base64')
-    
-    // Generate unique filename
-    const filename = `profiles/${email.replace(/[@.]/g, '_')}_${Date.now()}.jpg`
-    
-    // Upload to Storage
-    const bucket = adminStorage.bucket()
-    const file = bucket.file(filename)
-    
-    await file.save(buffer, {
-      metadata: {
-        contentType: 'image/jpeg',
-        metadata: {
-          uploadedBy: email,
-          cacheControl: 'public, max-age=31536000', // 1 year
-        }
-      }
-    })
+async function uploadProfileImage(
+  buffer: Buffer,
+  email: string,
+  contentType: string
+): Promise<string> {
+  const timestamp = Date.now()
+  const ext = contentType.split('/')[1] || 'jpg'
+  const filename = `profiles/${email.replace(/[@.]/g, '_')}_${timestamp}.${ext}`
 
-    // Make public and get download URL
-    await file.makePublic()
-    const [url] = await file.publicUrl()
-    
-    return url
-  } catch (error) {
-    console.error('Image upload failed:', error)
-    throw new Error('Failed to upload profile image')
-  }
+  const { error } = await adminStorage.bucket('profile-images').upload(filename, buffer, {
+    contentType,
+    upsert: true
+  })
+
+  if (error) throw error
+
+  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/profile-images/${filename}`
 }

@@ -1,10 +1,9 @@
-// guard/AuthGuard.tsx
 'use client'
-import { useEffect } from 'react'
+
+import { useEffect, useState, type ReactNode } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { useSelector } from 'react-redux'
-import { RootState } from '@/store'
-import type { ReactNode } from 'react'
+import { useAppSelector, RootState } from '@/store'
+import BlogSplashLoader from '@/components/common/BlogSplashLoader'
 
 interface AuthGuardProps {
   children: ReactNode
@@ -14,38 +13,82 @@ interface AuthGuardProps {
 const AuthGuard = ({ children, pageType }: AuthGuardProps) => {
   const router = useRouter()
   const pathname = usePathname()
-  const { user, loading } = useSelector((state: RootState) => state.auth)
+
+  const { user, authUserLoading, isAdminLoggedIn } = useAppSelector(
+    (state: RootState) => state.auth
+  )
+
+  const [isAllowed, setIsAllowed] = useState(false)
+
+  const publicPath = [
+    '/login',
+    '/register',
+    '/admin/login'
+  ]
 
   useEffect(() => {
-    if (loading) return
+    if (authUserLoading) return
 
     const loginPath = pageType === 'admin' ? '/admin/login' : '/login'
     const homePath = pageType === 'admin' ? '/admin/home' : '/home'
 
-    // NOT LOGGED IN
+    const isPublicRoute = publicPath.some(path =>
+      pathname.startsWith(path)
+    )
+
     if (!user) {
-      if (pathname === loginPath) return
+      if (isPublicRoute) {
+        setIsAllowed(true)
+        return
+      }
+
       router.replace(loginPath)
+      setIsAllowed(false)
       return
     }
 
-    // LOGGED IN - Skip login pages
-    if (user && pathname === loginPath) {
+    if (isPublicRoute) {
       router.replace(homePath)
+      setIsAllowed(false)
       return
     }
 
-    // Base paths
-    if (user && pathname === '/' && pageType === 'user') {
+    if (pathname === '/' && pageType === 'user') {
       router.replace('/home')
+      setIsAllowed(false)
+      return
     }
-    if (user && pathname === '/admin' && pageType === 'admin') {
-      router.replace('/admin/home')
-    }
-  }, [user, loading, pathname, router, pageType])
 
-  if (loading) {
-    return <div className="flex items-center justify-center min-h-screen">Loading...</div>
+    if (pathname === '/admin' && pageType === 'admin') {
+      router.replace('/admin/home')
+      setIsAllowed(false)
+      return
+    }
+
+    if (pageType === 'admin' && !isAdminLoggedIn) {
+      router.replace('/404')
+      setIsAllowed(false)
+      return
+    }
+
+    if (pageType === 'user' && isAdminLoggedIn) {
+      router.replace('/404')
+      setIsAllowed(false)
+      return
+    }
+
+    setIsAllowed(true)
+  }, [
+    user,
+    authUserLoading,
+    isAdminLoggedIn,
+    pathname,
+    router,
+    pageType
+  ])
+
+  if (authUserLoading || !isAllowed) {
+    return <BlogSplashLoader />
   }
 
   return <>{children}</>

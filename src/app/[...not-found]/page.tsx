@@ -1,4 +1,3 @@
-// Component Imports
 import Providers from '@components/Providers'
 import BlankLayout from '@layouts/BlankLayout'
 import NotFound from '@views/NotFound'

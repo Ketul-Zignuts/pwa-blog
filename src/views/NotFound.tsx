@@ -15,11 +15,19 @@ import Illustrations from '@components/Illustrations'
 
 // Hook Imports
 import { useImageVariant } from '@core/hooks/useImageVariant'
+import { useAppSelector } from '@/store'
+import { useMemo } from 'react'
 
 const NotFound = ({ mode }: { mode: Mode }) => {
-  // Vars
-  const darkImg = '/images/pages/misc-mask-dark.png'
-  const lightImg = '/images/pages/misc-mask-light.png'
+  const authData = useAppSelector((state) => state?.auth)
+  const darkImg = '/images/pages/misc-mask-dark.png';
+  const lightImg = '/images/pages/misc-mask-light.png';
+
+  const redirectTo = useMemo(() => {
+    if (authData?.isAdminLoggedIn && authData?.user) return '/admin/home'
+    if (authData?.user) return '/home'
+    return '/login'
+  }, [authData?.isAdminLoggedIn, authData?.user])
 
   // Hooks
   const miscBackground = useImageVariant(mode, lightImg, darkImg)
@@ -39,7 +47,7 @@ const NotFound = ({ mode }: { mode: Mode }) => {
           src='/images/illustrations/characters/5.png'
           className='object-cover bs-[400px] md:bs-[450px] lg:bs-[500px]'
         />
-        <Button href='/' component={Link} variant='contained'>
+        <Button href={redirectTo} component={Link} variant='contained'>
           Back to Home
         </Button>
       </div>

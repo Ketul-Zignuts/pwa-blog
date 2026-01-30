@@ -23,6 +23,12 @@ import Button from '@mui/material/Button'
 
 // Hook Imports
 import { useSettings } from '@core/hooks/useSettings'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { logoutAction } from '@/constants/api/auth'
+import { persistor, useAppDispatch, useAppSelector } from '@/store'
+import { toast } from 'react-toastify'
+import { setAuthLoading, authLogout } from '@/store/slices/authSlice'
+import { CircularProgress } from '@mui/material'
 
 // Styled component for badge content
 const BadgeContentSpan = styled('span')({
@@ -35,14 +41,12 @@ const BadgeContentSpan = styled('span')({
 })
 
 const UserDropdown = () => {
-  // States
+  const router = useRouter();
+  const dispatch = useAppDispatch();
+  const queryClient = useQueryClient();
   const [open, setOpen] = useState(false)
-
-  // Refs
   const anchorRef = useRef<HTMLDivElement>(null)
-
-  // Hooks
-  const router = useRouter()
+  const isAdminLoggedIn = useAppSelector((state)=>state.auth.isAdminLoggedIn)
 
   const { settings } = useSettings()
 
@@ -62,9 +66,24 @@ const UserDropdown = () => {
     setOpen(false)
   }
 
+  const { mutate: logout, isPending } = useMutation({
+    mutationFn: logoutAction,
+    onSuccess: () => {
+      persistor.purge()
+      dispatch(authLogout())
+      queryClient.clear()
+      router.replace(isAdminLoggedIn ? '/admin/login' : '/login')
+      toast.success('Logout successfully')
+    },
+    onError: (err: any) => {
+      const message = err?.message || err?.response?.data?.message || 'Logout failed!';
+      toast.error(message)
+    }
+  })
+
+
   const handleUserLogout = async () => {
-    // Redirect to login page
-    router.push('/login')
+    await logout()
   }
 
   return (
@@ -134,9 +153,10 @@ const UserDropdown = () => {
                       variant='contained'
                       color='error'
                       size='small'
-                      endIcon={<i className='ri-logout-box-r-line' />}
+                      endIcon={isPending ? <CircularProgress color='warning' size={20} /> : <i className='ri-logout-box-r-line' />}
                       onClick={handleUserLogout}
                       sx={{ '& .MuiButton-endIcon': { marginInlineStart: 1.5 } }}
+                      disabled={isPending}
                     >
                       Logout
                     </Button>
