@@ -5,7 +5,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
   try {
     const { id } = params
     const body = await req.json()
-    const { name, slug, description, icon, color, is_active } = body
+    const { name, slug, description, icon, is_active } = body
 
     if (!id) {
       return NextResponse.json(
@@ -22,7 +22,6 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
         slug,
         description: description ?? null,
         icon: icon ?? null,
-        color: color ?? '#3B82F6',
         is_active: is_active ?? true,
         updated_at: new Date().toISOString()
       })

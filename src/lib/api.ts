@@ -1,5 +1,6 @@
 import axios from 'axios';
 import Router from 'next/router';
+import { toast } from 'react-toastify';
 
 export const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL,
@@ -13,10 +14,8 @@ api.interceptors.request.use(
     async (config) => {
         try {
             let tokenData = null;
-
             const storage = localStorage.getItem('blog-master-auth');
             tokenData = storage ? JSON.parse(storage) : null;
-
             const token = tokenData?.token?.replace(/^"|"$/g, '');
             if (token) {
                 config.headers.Authorization = `Bearer ${token}`;
@@ -24,7 +23,6 @@ api.interceptors.request.use(
         } catch (error) {
             console.error('Token retrieval error:', error);
         }
-
         return config;
     },
     (error) => Promise.reject(error)
@@ -34,20 +32,21 @@ api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const status = error?.response?.status;
-        const message = error?.response?.data?.message || '';
-
-        if (
-            status === 403 &&
-            (message.includes('Token expired') || message.includes('Invalid token'))
-        ) {
+        if (status === 401) {
             try {
                 localStorage.removeItem('blog-master-auth');
-                Router.replace('/login');
+                localStorage.clear();
+                if(window && window !== undefined){
+                    window.location.href = '/login';
+                }else{
+                    Router && Router.replace('/login');
+                }
+                toast.error('Session expired. Please log in again.')
             } catch (err) {
-                console.error('Token cleanup or redirection error:', err);
+                console.error('Logout error:', err);
             }
+            return Promise.reject(error);
         }
-
         return Promise.reject(error);
     }
 );

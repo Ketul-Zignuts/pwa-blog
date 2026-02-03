@@ -14,9 +14,7 @@ const AuthGuard = ({ children, pageType }: AuthGuardProps) => {
   const router = useRouter()
   const pathname = usePathname()
 
-  const { user, authUserLoading, isAdminLoggedIn } = useAppSelector(
-    (state: RootState) => state.auth
-  )
+  const { user, authUserLoading, isAdminLoggedIn } = useAppSelector((state: RootState) => state.auth)
 
   const [isAllowed, setIsAllowed] = useState(false)
 
@@ -87,7 +85,7 @@ const AuthGuard = ({ children, pageType }: AuthGuardProps) => {
     pageType
   ])
 
-  if (authUserLoading || !isAllowed) {
+  if (!isAllowed) {
     return <BlogSplashLoader />
   }
 

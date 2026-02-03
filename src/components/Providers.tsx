@@ -12,6 +12,7 @@ import ReduxProvider from '@/store/ReduxProvider'
 import { PersistGate } from 'redux-persist/integration/react'
 import { persistor } from '@/store'
 import QueryProvider from './QueryProvider'
+import { ConfirmProvider } from '@/context/ConfirmContext'
 
 type Props = ChildrenType & {
   direction: Direction
@@ -32,7 +33,9 @@ const Providers = (props: Props) => {
         <ThemeProvider direction={direction} systemMode={systemMode}>
           <QueryProvider>
             <ReduxProvider>
+              <ConfirmProvider>
                 {children}
+              </ConfirmProvider>
             </ReduxProvider>
           </QueryProvider>
         </ThemeProvider>

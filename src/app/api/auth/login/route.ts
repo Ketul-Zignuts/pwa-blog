@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authSupabase, adminSupabase } from '@/lib/supabase-server'
+import { UserProfile } from '@/types/userTypes'
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function POST(req: NextRequest) {
     if (error || !data.session || !data.user) {
       return NextResponse.json(
         { success: false, message: 'Invalid credentials' },
-        { status: 401 }
+        { status: 403 }
       )
     }
 
@@ -48,6 +49,8 @@ export async function POST(req: NextRequest) {
             user.email?.split('@')[0],
           photoURL: user.user_metadata?.photoURL || '',
           phoneNumber: '',
+          isroadmin:false,
+          isadmin:false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -65,10 +68,12 @@ export async function POST(req: NextRequest) {
         displayName: existingUser?.displayName || user.user_metadata?.displayName || '',
         photoURL: existingUser?.photoURL || '',
         phoneNumber: existingUser?.phoneNumber || '',
-        bio: existingUser?.bio || ''
+        bio: existingUser?.bio || '',
+        isroadmin:existingUser?.isroadmin || false,
+        isadmin:existingUser.isadmin || false,
       },
       token: session.access_token
-    })
+    } as UserProfile)
 
     response.cookies.set('refresh_token', session.refresh_token, {
       httpOnly: true,

@@ -75,10 +75,11 @@ const AdminLogin = ({ mode }: { mode: Mode }) => {
       dispatch(setAuthLoading(true))
     },
     onSuccess: (userCredential: any) => {
+      console.log('userCredential: ', userCredential);
       const token = userCredential?.token
       const user = userCredential?.user
 
-      if (!user || !token) {
+      if (!userCredential?.success && (!user || !token)) {
         dispatch(setAuthLoading(false))
         return
       }
@@ -95,7 +96,7 @@ const AdminLogin = ({ mode }: { mode: Mode }) => {
       router.replace('/admin/home')
     },
     onError: (err: any) => {
-      dispatch(setAuthLoading(false))
+      console.log('err: ', err);
       const message = err?.response?.data?.message || 'Login failed!';
       toast.error(message)
     },
