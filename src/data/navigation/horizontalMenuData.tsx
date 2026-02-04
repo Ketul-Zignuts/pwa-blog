@@ -8,10 +8,15 @@ const horizontalMenuData = (): HorizontalMenuDataType[] => [
     icon: 'ri-home-smile-line'
   },
   {
-    label: 'About',
-    href: '/admin/about',
-    icon: 'ri-information-line'
+    label: 'Category',
+    href: '/admin/categories',
+    icon: 'ri-price-tag-line'
   },
+    {
+    label: 'Post',
+    href: '/admin/posts',
+    icon: 'ri-file-text-line'
+  }
 ]
 
 export default horizontalMenuData

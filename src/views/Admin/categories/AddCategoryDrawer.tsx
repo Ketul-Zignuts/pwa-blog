@@ -21,8 +21,9 @@ import { addUpdateCategorySchema } from '@/constants/schema/admin/categorySchema
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { adminCategoryCreateAction, adminCategoryUpdateAction } from '@/constants/api/admin/categories'
 import { toast } from 'react-toastify'
-
-/* ================= TYPES ================= */
+import { globalConfig } from '@/configs/globalConfig'
+import { useAppSelector } from '@/store'
+import { slugGetAction } from '@/constants/api/slug'
 
 type DrawerState = {
   open: boolean
@@ -56,14 +57,15 @@ const defaultValues: FormDataProps = {
 }
 
 const AddCategoryDrawer = ({ open, setOpen }: Props) => {
-  console.log('open: ', open);
   const isEdit = open?.data;
   const queryClient = useQueryClient();
+  const isRoAdmin = useAppSelector((state) => state?.auth?.user?.isroadmin)
 
   const {
     control,
     reset,
     handleSubmit,
+    setValue,
     formState: { errors }
   } = useForm({
     defaultValues,
@@ -72,7 +74,7 @@ const AddCategoryDrawer = ({ open, setOpen }: Props) => {
 
   /* ---------- populate form on edit ---------- */
   useEffect(() => {
-    if (open.data) {
+    if (open?.data) {
       reset({
         id: open?.data?.id || null,
         name: open?.data?.name || '',
@@ -80,24 +82,17 @@ const AddCategoryDrawer = ({ open, setOpen }: Props) => {
         description: open?.data?.description || '',
         icon: open?.data?.icon || '',
         post_count: open?.data?.post_count || 0,
-        is_active: open?.data?.is_active || true
+        is_active: open?.data?.is_active || false
       })
     } else {
-      reset({
-        name: '',
-        description: ''
-      })
+      reset(defaultValues)
     }
   }, [open.data, reset])
 
-  /* ---------- close ---------- */
   const handleClose = () => {
+    reset()
     setOpen({ open: false, data: null })
   }
-
-  /* ---------- submit ---------- */
-
-
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: CategoryDataType) => {
@@ -107,7 +102,6 @@ const AddCategoryDrawer = ({ open, setOpen }: Props) => {
     onSuccess: () => {
       toast.success(isEdit ? 'Category updated successfully!' : 'Category created successfully!');
       handleClose();
-      queryClient.invalidateQueries({ queryKey: ['admin-categories'] });
     },
     onError: (err: any) => {
       const message = err?.response?.data?.message || 'Something went wrong!';
@@ -118,7 +112,18 @@ const AddCategoryDrawer = ({ open, setOpen }: Props) => {
     }
   });
 
+  const getSlugMutation = useMutation({
+    mutationFn: ({ name }: { name: string }) => slugGetAction({ name }),
+    onSuccess: (slugRes) => {
+      setValue('slug', slugRes.slug, { shouldValidate: true })
+    }
+  })
+
   const onSubmit = async (data: any) => {
+    if (isRoAdmin) {
+      toast.error(globalConfig?.RO_ADMIN_MESSAGE)
+      return
+    }
     await mutate(data);
   };
 
@@ -151,6 +156,11 @@ const AddCategoryDrawer = ({ open, setOpen }: Props) => {
           placeholder='Category Name'
           label='Category Name'
           type='text'
+          onBlurCallback={async (value) => {
+            if (value) {
+              await getSlugMutation.mutateAsync({ name: value })
+            }
+          }}
         />
         <CustomTextInput
           control={control as any}

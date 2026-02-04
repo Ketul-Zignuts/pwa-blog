@@ -42,6 +42,7 @@ const RegisterField = () => {
             placeholder='Email'
             label='Email'
             type='email'
+            shrinkLabel
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -56,6 +57,7 @@ const RegisterField = () => {
             icon={<i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />}
             onIconPress={handleClickShowPassword}
             errors={errors}
+            shrinkLabel
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -87,7 +89,7 @@ const RegisterField = () => {
           <CustomDropzoneInput
             control={control}
             name="photoURL"
-            label="Gallery Images"
+            label="Profile pic"
             errors={errors}
             trigger={trigger}
           />

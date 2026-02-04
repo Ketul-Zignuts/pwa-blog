@@ -11,6 +11,11 @@ const verticalMenuData = (): VerticalMenuDataType[] => [
     label: 'Category',
     href: '/admin/categories',
     icon: 'ri-price-tag-line'
+  },
+  {
+    label: 'Post',
+    href: '/admin/posts',
+    icon: 'ri-file-text-line'
   }
 ]
 

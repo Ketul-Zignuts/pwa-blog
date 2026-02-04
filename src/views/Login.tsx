@@ -61,7 +61,7 @@ const Login = ({ mode }: { mode: Mode }) => {
     handleSubmit,
     formState: { errors },
   } = useForm<LoginProps>({
-    resolver: yupResolver(loginSchema),
+    resolver: yupResolver(loginSchema as any),
     reValidateMode: 'onChange',
     mode: 'all',
     defaultValues: {
@@ -134,6 +134,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                 placeholder='Email'
                 label='Email'
                 type='text'
+                shrinkLabel
               />
               <CustomTextInput
                 id='password'
@@ -146,6 +147,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                 icon={<i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />}
                 onIconPress={handleClickShowPassword}
                 errors={errors}
+                shrinkLabel
               />
               <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
                 <Typography

@@ -36,6 +36,7 @@ interface FormInputProps {
   icon?: React.ReactNode
   onIconPress?: () => void
   iconPosition?: 'start' | 'end'
+  shrinkLabel?:boolean
 }
 
 const glowAnimation = keyframes`
@@ -77,7 +78,8 @@ function CustomTextInput({
   requiredFlag = false,
   inputProps,
   icon,
-  onIconPress
+  onIconPress,
+  shrinkLabel = false
 }: FormInputProps) {
   const isRequired = requiredFlag || false
 
@@ -104,6 +106,9 @@ function CustomTextInput({
               error={Boolean(errors?.[name])}
               value={value ?? ''}
               inputProps={inputProps}
+              InputLabelProps={{
+                shrink: shrinkLabel ?? false
+              }}
               onChange={val => {
                 const inputValue = val.target.value
                 if (type === 'number' && parseFloat(inputValue) >= 0) {
@@ -130,16 +135,16 @@ function CustomTextInput({
                 '& fieldset': {
                   ...(isRequired &&
                     !errors?.[name] && {
-                      border: '2px solid #ff4444 !important',
-                      animation: `${glowAnimation} 2s ease-in-out infinite`
-                    })
+                    border: '2px solid #ff4444 !important',
+                    animation: `${glowAnimation} 2s ease-in-out infinite`
+                  })
                 },
                 '&:focus-within fieldset':
                   isRequired && !errors?.[name]
                     ? {
-                        border: '2px solid #ff6666 !important',
-                        boxShadow: '0 0 10px rgba(255, 68, 68, 0.5)'
-                      }
+                      border: '2px solid #ff6666 !important',
+                      boxShadow: '0 0 10px rgba(255, 68, 68, 0.5)'
+                    }
                     : {}
               }}
               InputProps={{

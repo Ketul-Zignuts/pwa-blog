@@ -4,129 +4,42 @@ import { adminSupabase, adminStorage } from '@/lib/supabase-server'
 export async function POST(req: NextRequest) {
   try {
     const body = await req.formData()
+    const userId = body.get('userId') as string
+    const file = body.get('file') as File
 
-    const email = body.get('email') as string
-    const password = body.get('password') as string
-    const displayName = body.get('displayName') as string
-    const phoneNumber = body.get('phoneNumber') as string
-    const photoURLFile = body.get('photoURL') as File | null
+    if (!file) return NextResponse.json({ success: false, message: 'No file uploaded' }, { status: 400 })
+    if (!userId) return NextResponse.json({ success: false, message: 'userId is required' }, { status: 400 })
 
-    if (!email) {
-      return NextResponse.json({ success: false, message: 'Email is required' })
-    }
+    // Convert file to buffer
+    const buffer = Buffer.from(await file.arrayBuffer())
 
-    if (!password || password.length < 6) {
-      return NextResponse.json({
-        success: false,
-        message: 'Password must be at least 6 characters'
-      })
-    }
+    // Generate unique filename
+    const timestamp = Date.now()
+    const ext = file.type.split('/')[1] || 'png'
+    const filename = `temp/${userId}_${timestamp}.${ext}`
 
-    // 🔎 Check if user already exists
-    const { data: existing } = await adminSupabase.auth.admin.listUsers()
-    const userExists = existing?.users?.some((u) => u.email === email)
-
-    if (userExists) {
-      return NextResponse.json({
-        success: false,
-        message: 'User already exists'
-      })
-    }
-
-    // 📸 Upload profile image (optional)
-    let finalPhotoURL = ''
-
-    if (photoURLFile && photoURLFile.size > 0) {
-      const buffer = Buffer.from(await photoURLFile.arrayBuffer())
-      finalPhotoURL = await uploadProfileImage(
-        buffer,
-        email,
-        photoURLFile.type
-      )
-    }
-
-    // 📞 Format phone number
-    let formattedPhoneNumber: string | undefined
-
-    if (phoneNumber) {
-      const cleaned = phoneNumber.replace(/\D/g, '')
-
-      if (cleaned.length === 10) {
-        formattedPhoneNumber = `+91${cleaned}`
-      } else if (cleaned.length === 12 && cleaned.startsWith('91')) {
-        formattedPhoneNumber = `+${cleaned}`
-      } else if (phoneNumber.startsWith('+')) {
-        formattedPhoneNumber = phoneNumber
-      } else {
-        return NextResponse.json({
-          success: false,
-          message: 'Invalid phone number format'
-        })
-      }
-    }
-
-    // 👤 Create auth user
-    const { data: userRecord, error: createError } =
-      await adminSupabase.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          displayName: displayName || email.split('@')[0],
-          photoURL: finalPhotoURL,
-          phoneNumber: formattedPhoneNumber
-        }
-      })
-
-    if (createError || !userRecord?.user) {
-      throw new Error(createError?.message || 'Failed to create user')
-    }
-
-    // 🧾 Insert user profile (DB handles timestamps)
-    const { error: insertError } = await adminSupabase.from('users').insert({
-      uid: userRecord.user.id,
-      email: userRecord.user.email!,
-      displayName:
-        userRecord.user.user_metadata?.displayName ||
-        displayName ||
-        email.split('@')[0],
-      photoURL: finalPhotoURL,
-      phoneNumber: formattedPhoneNumber || ''
+    // Upload to temp-images bucket
+    const { error: uploadError } = await adminStorage.bucket('temp-images').upload(filename, buffer, {
+      contentType: file.type,
+      upsert: true
     })
+    if (uploadError) throw uploadError
 
-    if (insertError) {
-      console.error('Profile insert error:', insertError)
-      throw new Error('Failed to create user profile')
-    }
+    // Insert into temp_images table
+    const { data: tempData, error: dbError } = await adminSupabase
+      .from('temp_images')
+      .insert([{ user_id: userId, file_path: filename }])
+      .select()
+      .single()
+    if (dbError) throw dbError
 
-    return NextResponse.json({
-      success: true,
-      message: 'User registered successfully! Please log in.'
-    })
+    // Get public URL correctly
+    const { data } = adminStorage.bucket('temp-images').getPublicUrl(filename)
+    const publicUrl = data.publicUrl
+
+    return NextResponse.json({ success: true, url: publicUrl, tempId: tempData.id })
   } catch (error: any) {
-    console.error('Register error:', error)
-    return NextResponse.json({
-      success: false,
-      message: error.message || 'Registration failed'
-    })
+    console.error('Temp image upload error:', error)
+    return NextResponse.json({ success: false, message: error.message }, { status: 500 })
   }
-}
-
-async function uploadProfileImage(
-  buffer: Buffer,
-  email: string,
-  contentType: string
-): Promise<string> {
-  const timestamp = Date.now()
-  const ext = contentType.split('/')[1] || 'jpg'
-  const filename = `profiles/${email.replace(/[@.]/g, '_')}_${timestamp}.${ext}`
-
-  const { error } = await adminStorage.bucket('profile-images').upload(filename, buffer, {
-    contentType,
-    upsert: true
-  })
-
-  if (error) throw error
-
-  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/profile-images/${filename}`
 }

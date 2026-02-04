@@ -36,10 +36,12 @@ api.interceptors.response.use(
             try {
                 localStorage.removeItem('blog-master-auth');
                 localStorage.clear();
+                const isAdminRoute = window.location.pathname.startsWith('/admin/');
+                const redirectPath = isAdminRoute ? '/admin/login' : '/login';
                 if(window && window !== undefined){
-                    window.location.href = '/login';
+                    window.location.href = redirectPath;
                 }else{
-                    Router && Router.replace('/login');
+                    Router && Router.replace(redirectPath);
                 }
                 toast.error('Session expired. Please log in again.')
             } catch (err) {

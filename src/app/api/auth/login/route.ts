@@ -5,7 +5,7 @@ import { UserProfile } from '@/types/userTypes'
 export async function POST(req: NextRequest) {
   try {
 
-    const { email, password } = await req.json()
+    const { email, password, type } = await req.json()
 
     if (!email || !password) {
       return NextResponse.json(
@@ -33,6 +33,15 @@ export async function POST(req: NextRequest) {
       .select('*')
       .eq('uid', user.id)
       .maybeSingle()
+
+    if (type === 'admin') {
+      if (!existingUser?.isadmin) {
+        return NextResponse.json(
+          { success: false, message: 'Admin access denied' },
+          { status: 403 }
+        )
+      }
+    }
 
     if (profileError) {
       console.error('Profile lookup error:', profileError)

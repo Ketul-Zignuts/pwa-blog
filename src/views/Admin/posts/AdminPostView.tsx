@@ -3,24 +3,17 @@
 import { useState } from 'react'
 import { IconButton, Tooltip, Chip, Button, Box } from '@mui/material'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import {
-  adminCategoryDeleteAction,
-  adminCategoryListAction
-} from '@/constants/api/admin/categories'
 import { useConfirm } from '@/hooks/useConfirm'
 import { DataTable } from '@/components/common/DataTable'
 import type { ColumnDef } from '@tanstack/react-table'
 import type { CategoryDataType } from '@/types/categoryTypes'
-import AddCategoryDrawer from './AddCategoryDrawer'
-import { useAppSelector } from '@/store'
-import { toast } from 'react-toastify'
-import { globalConfig } from '@/configs/globalConfig'
+import { adminPostDeleteAction, adminPostListAction } from '@/constants/api/admin/posts'
+import { useRouter } from 'next/navigation'
 
-const AdmincategoryView = () => {
+const AdminPostView = () => {
   const { confirm } = useConfirm()
   const queryClient = useQueryClient()
-  const isRoAdmin = useAppSelector((state) => state?.auth?.user?.isroadmin)
-
+  const router = useRouter();
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
   const [search, setSearch] = useState('')
@@ -30,9 +23,9 @@ const AdmincategoryView = () => {
   })
 
   const { data: categoriesData, isLoading } = useQuery({
-    queryKey: ['admin-categories', page, pageSize, search],
+    queryKey: ['admin-posts', page, pageSize, search],
     queryFn: async () => {
-      const res = await adminCategoryListAction({
+      const res = await adminPostListAction({
         page: page + 1, // API is 1-based
         limit: pageSize,
         search: search || undefined
@@ -45,9 +38,9 @@ const AdmincategoryView = () => {
   const rowCount = categoriesData?.pagination?.total ?? 0
 
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => adminCategoryDeleteAction(id),
+    mutationFn: (id: string) => adminPostDeleteAction(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-categories'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-posts'] })
     }
   })
 
@@ -57,10 +50,6 @@ const AdmincategoryView = () => {
       description: 'This action cannot be undone',
       confirmText: 'Delete'
     })
-    if (isRoAdmin) {
-      toast.error(globalConfig?.RO_ADMIN_MESSAGE)
-      return
-    }
 
     if (ok) deleteMutation.mutate(id)
   }
@@ -113,9 +102,9 @@ const AdmincategoryView = () => {
             color='primary'
             variant='contained'
             startIcon={<i className='ri-add-line text-[22px]' />}
-            onClick={() => setOpenCategoryForm({ open: true, data: null })}
+            onClick={() => router.push('/admin/posts/create')}
           >
-            Add Category
+            Add Post
           </Button>
         )}
         renderRowActions={row => (
@@ -123,7 +112,7 @@ const AdmincategoryView = () => {
             <Tooltip title='Edit'>
               <IconButton
                 size='small'
-                onClick={() => setOpenCategoryForm({ open: true, data: row })}
+                onClick={() => router.push(`/admin/posts/${row?.slug}`)}
                 disabled={deleteMutation.isPending}
                 color='primary'
               >
@@ -143,12 +132,8 @@ const AdmincategoryView = () => {
           </Box>
         )}
       />
-      <AddCategoryDrawer
-        open={openCategoryForm}
-        setOpen={setOpenCategoryForm}
-      />
     </>
   )
 }
 
-export default AdmincategoryView
+export default AdminPostView

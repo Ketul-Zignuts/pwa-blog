@@ -8,7 +8,11 @@ export const loginSchema = yup.object().shape({
   password: yup
     .string()
     .min(6, 'Password must be at least 6 characters')
-    .required('Password is required')
+    .required('Password is required'),
+  type: yup
+    .string()
+    .oneOf(['admin', 'user'], 'Type must be admin or user')
+    .optional()
 })
 
 export const registerSchema = yup.object().shape({

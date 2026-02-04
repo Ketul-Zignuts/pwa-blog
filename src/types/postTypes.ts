@@ -1,6 +1,6 @@
-export type CategoryDataType = SingleCategoryData | null;
+export type PostDataType = SinglePostData | null;
 
-type SingleCategoryData = {
+type SinglePostData = {
   id?: string;
   name: string;
   slug: string;
@@ -12,7 +12,7 @@ type SingleCategoryData = {
   updated_at?: string;
 }
 
-export type adminCategoryFilterParam = {
+export type adminPostFilterParam = {
   page?: number;
   limit?: number;
   search?: string;
