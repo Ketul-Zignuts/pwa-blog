@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { adminAuth } from '@/lib/supabase-server';
 
-const protectedPaths = ['/api/admin', '/api/general'];
+const protectedPaths = ['/api/admin', '/api/general', '/api/upload'];
 
 export async function middleware(req: NextRequest) {  
   const { pathname } = req.nextUrl;
@@ -43,5 +43,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/api/admin/:path*', '/api/general/:path*', '/api/upload/:path*'],
+  matcher: ['/api/admin/:path*', '/api/general/:path*', '/api/upload','/api/upload/:path*'],
 };

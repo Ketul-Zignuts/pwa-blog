@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Underline from '@tiptap/extension-underline'
@@ -9,18 +9,15 @@ import TextAlign from '@tiptap/extension-text-align'
 import Link from '@tiptap/extension-link'
 import Image from '@tiptap/extension-image'
 import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import FontFamily from '@tiptap/extension-font-family'
-import TextStyle from '@tiptap/extension-text-style'
+import { TextStyle, FontSize, FontFamily } from '@tiptap/extension-text-style'
 import Color from '@tiptap/extension-color'
 import { Extension } from '@tiptap/core'
 import { lowlight } from '@/lib/lowlight'
 import CustomIconButton from '@/@core/components/mui/IconButton'
-import { 
-  Box, Typography, Divider, Dialog, DialogTitle, IconButton, 
-  DialogContent, TextField, Button, Tooltip, Popover, MenuItem, Chip
-} from '@mui/material'
+import { Box, Typography, Divider, Dialog, DialogTitle, IconButton,DialogContent, TextField, Button, Tooltip, Popover, MenuItem, Chip } from '@mui/material'
 import { useMutation } from '@tanstack/react-query'
 import { tempFileUploadAction } from '@/constants/api/temp-upload'
+import ImageResize from 'tiptap-extension-resize-image'
 
 interface TipTapEditorFieldProps {
   value: string
@@ -36,6 +33,22 @@ const TabIndent = Extension.create({
   addKeyboardShortcuts() {
     return {
       Tab: () => this.editor.commands.insertContent('    ')
+    }
+  }
+})
+
+const ImageWithAlignment = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      'data-align': {
+        default: 'center',
+        parseHTML: element => element.getAttribute('data-align'),
+        renderHTML: attributes => {
+          if (!attributes['data-align']) return {}
+          return { 'data-align': attributes['data-align'] }
+        }
+      }
     }
   }
 })
@@ -65,48 +78,74 @@ const BlogTextEditor = ({
     onSuccess: (res) => {
       if (res.success && res.url) {
         editor?.chain().focus().setImage({ src: res.url }).run()
+        setTimeout(() => {
+          editor?.chain().focus().updateAttributes('image', { 'data-align': 'center' }).run()
+        }, 0)
       }
     }
   })
 
   const editor = useEditor({
+    immediatelyRender: false,
     editable: !disabled,
     extensions: [
       StarterKit.configure({ codeBlock: false }),
       CodeBlockLowlight.configure({ lowlight, defaultLanguage: 'plaintext' }),
       TabIndent,
       Underline,
-      TextStyle, // ✅ Required base mark
-      FontFamily.configure({ types: ['textStyle'] }), // ✅ Official FontFamily extension
+      TextStyle,        // Required base mark
+      FontSize,         // Font size functionality
+      FontFamily,       // Font family functionality
       Color.configure({ types: ['textStyle'] }),
       Placeholder.configure({ placeholder }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
       Link.configure({
         openOnClick: true,
         linkOnPaste: true,
-        HTMLAttributes: { 
+        HTMLAttributes: {
           class: 'text-primary underline hover:no-underline cursor-pointer',
           target: '_blank',
           rel: 'noopener noreferrer'
         }
       }),
-      Image.configure({
+      ImageWithAlignment.configure({
         inline: false,
         allowBase64: true,
-        HTMLAttributes: { class: 'max-w-full h-auto my-4 rounded-lg shadow-md max-h-96' }
+        HTMLAttributes: {
+          class: 'max-w-full h-auto my-4 rounded-lg shadow-md max-h-96'
+        },
+      }),
+      ImageResize.configure({
+        inline: false,
       })
     ],
     content: value || '',
     onUpdate: ({ editor }) => onChange(editor.getHTML())
   })
 
+  const isImageAlignActive = useCallback((align: 'left' | 'center' | 'right') => {
+    const attrs = editor?.getAttributes('image')
+    console.log('Image attrs:', attrs)
+    return attrs?.['data-align'] === align || false  // Added return!
+  }, [editor])
+
+  const setImageAlign = useCallback((align: 'left' | 'center' | 'right') => {
+    if (!editor?.isActive('image')) return false
+    editor.chain().focus().updateAttributes('image', { 'data-align': align }).run()
+    return true
+  }, [editor])
+
+  const canSetImageAlign = useCallback(() => {
+    return editor?.isActive('image') || false
+  }, [editor])
+
   useEffect(() => {
     if (editor && value !== editor.getHTML()) {
-      editor.commands.setContent(value || '', false)
+      editor.commands.setContent(value || '', { emitUpdate: false })
     }
   }, [value, editor])
 
-  // ✅ OFFICIAL DOCS WAY - Use FontFamily commands
+  // ✅ FIXED: Correct v3 commands
   const setTextColor = (color: string) => {
     editor?.chain().focus().setColor(color).run()
     setColorAnchorEl(null)
@@ -128,29 +167,21 @@ const BlogTextEditor = ({
   }
 
   const setFontFamily = (family: string) => {
-    editor?.chain().focus().setFontFamily(family).run() // ✅ Official command
+    editor?.chain().focus().setFontFamily(family).run()
     setFontAnchorEl(null)
   }
 
   const unsetFontFamily = () => {
-    editor?.chain().focus().unsetFontFamily().run() // ✅ Official command
+    editor?.chain().focus().unsetFontFamily().run()
     setFontAnchorEl(null)
   }
 
-  // ✅ Better active state detection (DOM-based since isActive has browser CSS issue)
-  const isTextColorActive = () => {
-    return !!editor?.getAttributes('textStyle').color
-  }
 
-  const getCurrentFontSize = () => {
-    const attrs = editor?.getAttributes('textStyle')
-    return attrs?.fontSize || ''
-  }
-
-  const getCurrentFontFamily = () => {
-    const attrs = editor?.getAttributes('textStyle')
-    return attrs?.fontFamily || ''
-  }
+  const isTextColorActive = () => !!editor?.getAttributes('textStyle')?.color
+  const getCurrentFontSize = () => editor?.getAttributes('textStyle')?.fontSize || ''
+  const getCurrentFontFamily = () => editor?.getAttributes('textStyle')?.fontFamily || ''
+  const isFontSizeActive = () => !!getCurrentFontSize()
+  const isFontFamilyActive = () => !!getCurrentFontFamily()
 
   const colorPresets = [
     '#000000', '#e60000', '#ff8c00', '#ffd700', '#008000',
@@ -160,11 +191,12 @@ const BlogTextEditor = ({
   const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '48px']
   const fontFamilies = [
     'Inter, sans-serif',
-    'Georgia, serif',
-    'Monaco, monospace',
-    'Playfair Display, serif',
-    'Roboto Slab, serif',
-    'JetBrains Mono, monospace'
+    '"Comic Sans MS", cursive',
+    'serif',
+    'monospace',
+    'cursive',
+    '"Exo 2", sans-serif',
+    'Poppins, sans-serif'
   ]
 
   const handleImageClick = () => fileInputRef.current?.click()
@@ -184,10 +216,10 @@ const BlogTextEditor = ({
 
   const insertLink = () => {
     if (!editor || !linkUrl.trim()) return
-    
+
     const selectedText = getSelectedText()
     const textToUse = selectedText || linkText
-    
+
     if (textToUse.trim()) {
       editor.chain()
         .focus()
@@ -197,22 +229,22 @@ const BlogTextEditor = ({
           text: textToUse,
           marks: [{
             type: 'link',
-            attrs: { 
-              href: linkUrl.trim(), 
+            attrs: {
+              href: linkUrl.trim(),
               target: '_blank',
-              rel: 'noopener noreferrer' 
+              rel: 'noopener noreferrer'
             }
           }]
         })
         .run()
     } else {
-      editor.chain().focus().extendMarkRange('link').setLink({ 
+      editor.chain().focus().extendMarkRange('link').setLink({
         href: linkUrl.trim(),
         target: '_blank',
         rel: 'noopener noreferrer'
       }).run()
     }
-    
+
     setLinkDialogOpen(false)
     setLinkUrl('')
     setLinkText('')
@@ -283,9 +315,63 @@ const BlogTextEditor = ({
             </CustomIconButton>
           </Tooltip>
 
+          {canSetImageAlign() && (
+            <>
+              <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+
+              <Tooltip title="Align Left">
+                <CustomIconButton
+                  {...(isImageAlignActive('left') && { color: 'primary' })}
+                  variant="outlined" size="small"
+                  onClick={() => setImageAlign('left')}
+                >
+                  <i className="ri-align-left" />
+                </CustomIconButton>
+              </Tooltip>
+
+              <Tooltip title="Align Center">
+                <CustomIconButton
+                  {...(isImageAlignActive('center') && { color: 'primary' })}
+                  variant="outlined" size="small"
+                  onClick={() => setImageAlign('center')}
+                >
+                  <i className="ri-align-center" />
+                </CustomIconButton>
+              </Tooltip>
+
+              <Tooltip title="Align Right">
+                <CustomIconButton
+                  {...(isImageAlignActive('right') && { color: 'primary' })}
+                  variant="outlined" size="small"
+                  onClick={() => setImageAlign('right')}
+                >
+                  <i className="ri-align-right" />
+                </CustomIconButton>
+              </Tooltip>
+            </>
+          )}
+
+          <Tooltip title="Bullet List">
+            <CustomIconButton
+              className={editor.isActive('bulletList') ? 'bg-primary/10' : ''}
+              onClick={() => editor.chain().focus().toggleBulletList().run()}
+            >
+              <i className="ri-list-unordered" />
+            </CustomIconButton>
+          </Tooltip>
+
+          <Tooltip title="Numbered List">
+            <CustomIconButton
+              className={editor.isActive('orderedList') ? 'bg-primary/10' : ''}
+              onClick={() => editor.chain().focus().toggleOrderedList().run()}
+            >
+              <i className="ri-list-ordered" />
+            </CustomIconButton>
+          </Tooltip>
+
           <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
 
-          {/* Style Controls */}
+          {/* Style Controls - ✅ FULLY FIXED */}
           <Tooltip title="Text Color">
             <CustomIconButton
               {...(isTextColorActive() && { color: 'primary' })}
@@ -299,18 +385,18 @@ const BlogTextEditor = ({
 
           <Tooltip title="Font Size">
             <CustomIconButton
-              {...(getCurrentFontSize() && { color: 'primary' })}
+              {...(isFontSizeActive() && { color: 'primary' })}
               variant="outlined"
               size="small"
               onClick={(e) => setSizeAnchorEl(e.currentTarget)}
             >
-              <i className="ri-text-size" />
+              <i className="ri-font-size-2 text-[22px]"></i>
             </CustomIconButton>
           </Tooltip>
 
           <Tooltip title="Font Family">
             <CustomIconButton
-              {...(getCurrentFontFamily() && { color: 'primary' })}
+              {...(isFontFamilyActive() && { color: 'primary' })}
               variant="outlined"
               size="small"
               onClick={(e) => setFontAnchorEl(e.currentTarget)}
@@ -356,7 +442,7 @@ const BlogTextEditor = ({
 
         <Divider />
 
-        {/* Color Picker Popover */}
+        {/* Color Picker */}
         <Popover
           open={Boolean(colorAnchorEl)}
           anchorEl={colorAnchorEl}
@@ -370,17 +456,17 @@ const BlogTextEditor = ({
                 <Tooltip key={color} title={color}>
                   <Chip
                     size="small"
-                    sx={{ 
-                      width: 32, 
-                      height: 32, 
+                    sx={{
+                      width: 32,
+                      height: 32,
                       borderRadius: '50%',
                       backgroundColor: color,
                       border: '2px solid transparent',
                       cursor: 'pointer',
                       '&:hover': { borderColor: 'primary.main' },
-                      ...(editor?.isActive('textStyle', { color }) && { 
-                        borderColor: 'primary.main', 
-                        transform: 'scale(1.1)' 
+                      ...(editor?.isActive('textStyle', { color }) && {
+                        borderColor: 'primary.main',
+                        transform: 'scale(1.1)'
                       })
                     }}
                     onClick={() => setTextColor(color)}
@@ -388,12 +474,7 @@ const BlogTextEditor = ({
                 </Tooltip>
               ))}
             </Box>
-            <Button
-              size="small"
-              fullWidth
-              onClick={unsetTextColor}
-              sx={{ mt: 1 }}
-            >
+            <Button size="small" fullWidth onClick={unsetTextColor} sx={{ mt: 1 }}>
               Remove Color
             </Button>
           </Box>
@@ -409,8 +490,8 @@ const BlogTextEditor = ({
         >
           <Box sx={{ p: 2, minWidth: 120 }}>
             {fontSizes.map(size => (
-              <MenuItem 
-                key={size} 
+              <MenuItem
+                key={size}
                 onClick={() => setFontSize(size)}
                 selected={getCurrentFontSize() === size}
               >
@@ -432,13 +513,13 @@ const BlogTextEditor = ({
         >
           <Box sx={{ p: 2, minWidth: 200 }}>
             {fontFamilies.map(family => (
-              <MenuItem 
-                key={family} 
+              <MenuItem
+                key={family}
                 onClick={() => setFontFamily(family)}
-                sx={{ fontFamily: family.split(',')[0] }} // ✅ Show preview correctly
+                sx={{ fontFamily: family.includes(',') ? family.split(',')[0].replace(/"/g, '') : family }}
                 selected={getCurrentFontFamily() === family}
               >
-                {family.split(',')[0]}
+                {family.split(',')[0].replace(/"/g, '')}
               </MenuItem>
             ))}
             <Divider />
@@ -455,26 +536,26 @@ const BlogTextEditor = ({
             </IconButton>
           </DialogTitle>
           <DialogContent>
-            <TextField 
-              fullWidth 
-              label="Link text" 
-              value={linkText} 
-              onChange={(e) => setLinkText(e.target.value)} 
-              helperText="Leave empty to use selected text" 
-              sx={{ mb: 2 }} 
+            <TextField
+              fullWidth
+              label="Link text"
+              value={linkText}
+              onChange={(e) => setLinkText(e.target.value)}
+              helperText="Leave empty to use selected text"
+              sx={{ mb: 2 }}
             />
-            <TextField 
-              fullWidth 
-              label="URL" 
-              value={linkUrl} 
-              onChange={(e) => setLinkUrl(e.target.value)} 
-              placeholder="https://example.com" 
-              sx={{ mb: 2 }} 
+            <TextField
+              fullWidth
+              label="URL"
+              value={linkUrl}
+              onChange={(e) => setLinkUrl(e.target.value)}
+              placeholder="https://example.com"
+              sx={{ mb: 2 }}
             />
-            <Button 
-              fullWidth 
-              variant="contained" 
-              onClick={insertLink} 
+            <Button
+              fullWidth
+              variant="contained"
+              onClick={insertLink}
               disabled={!linkUrl.trim()}
             >
               Insert Link
@@ -487,17 +568,34 @@ const BlogTextEditor = ({
           sx={{
             p: 2,
             minHeight: 200,
-            '& .ProseMirror': { 
-              minHeight: 150, 
-              outline: 'none' 
+            '& .ProseMirror': {
+              minHeight: 150,
+              outline: 'none'
+            },
+            '& img[data-align="left"]': {
+              float: 'left !important',
+              margin: '0 1rem 1rem 0 !important',
+              clear: 'left',
+              maxWidth: '50%'
+            },
+            '& img[data-align="center"]': {
+              display: 'block !important',
+              margin: '0 auto 1rem auto !important',
+              clear: 'both'
+            },
+            '& img[data-align="right"]': {
+              float: 'right !important',
+              margin: '0 0 1rem 1rem !important',
+              clear: 'right',
+              maxWidth: '50%'
             },
             '& .ProseMirror a': {
               color: 'primary.main',
               textDecoration: 'underline',
               cursor: 'pointer',
-              '&:hover': { 
-                textDecoration: 'underline', 
-                opacity: 0.8 
+              '&:hover': {
+                textDecoration: 'underline',
+                opacity: 0.8
               }
             },
             '& pre': {
@@ -509,9 +607,9 @@ const BlogTextEditor = ({
               fontFamily: 'JetBrains Mono, monospace',
               fontSize: '14px'
             },
-            '& pre code': { 
-              background: 'none', 
-              padding: 0 
+            '& pre code': {
+              background: 'none',
+              padding: 0
             }
           }}
           onClick={() => editor.chain().focus().run()}

@@ -37,6 +37,8 @@ interface FormInputProps {
   onIconPress?: () => void
   iconPosition?: 'start' | 'end'
   shrinkLabel?:boolean
+  iconButtonDisable?:boolean
+  fieldArray?:boolean
 }
 
 const glowAnimation = keyframes`
@@ -79,9 +81,16 @@ function CustomTextInput({
   inputProps,
   icon,
   onIconPress,
-  shrinkLabel = false
+  shrinkLabel = false,
+  iconButtonDisable = false,
+  fieldArray
 }: FormInputProps) {
   const isRequired = requiredFlag || false
+
+  if(fieldArray){
+
+    console.log('errors?.[name]: ', errors?.[name]);
+  }
 
   return (
     <Box sx={{ width: '100%' }}>
@@ -103,7 +112,7 @@ function CustomTextInput({
               placeholder={placeholder}
               label={label ?? undefined}
               autoComplete='off'
-              error={Boolean(errors?.[name])}
+              error={fieldArray ? errors?.[name] : Boolean(errors?.[name])}
               value={value ?? ''}
               inputProps={inputProps}
               InputLabelProps={{
@@ -157,7 +166,7 @@ function CustomTextInput({
                       onMouseDown={(e) => e.preventDefault()}
                       edge="end"
                       size="small"
-                      disabled={disabled}
+                      disabled={iconButtonDisable}
                     >
                       {icon}
                     </IconButton>

@@ -8,6 +8,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Avatar, Box, Button, Card, CardContent, CardHeader, Grid, Typography } from '@mui/material';
 import { useMutation } from '@tanstack/react-query';
 import { FormProvider, useForm } from 'react-hook-form';
+import CustomTextInput from '@/components/form/CustomTextInput';
 
 interface AddUpdatePostFormData {
   id: string | null;
@@ -18,14 +19,13 @@ interface AddUpdatePostFormData {
   content: string;
   excerpt: string | null;
   hero_image: string | null;
-  post_images: string[];
-  status: 'draft' | 'published' | 'archived';
-  is_featured: boolean;
-  read_time: number | null;
-  tags: string[];
+  status: 'draft' | 'published' | 'archived'; //pending
+  is_featured: boolean;                       //pending
+  read_time: number | null;                   //pending
+  tags: string[];                             //pending
   seo_title: string | null;
   seo_description: string | null;
-  published_at: Date | null;
+  published_at: Date | null;                  //pending
 }
 
 const defaultValues: AddUpdatePostFormData = {
@@ -37,7 +37,6 @@ const defaultValues: AddUpdatePostFormData = {
   content: '',
   excerpt: null,
   hero_image: null,
-  post_images: [],
   status: 'draft',
   is_featured: false,
   read_time: null, //admin
@@ -73,7 +72,7 @@ const AdminPostForm = () => {
     }
   })
 
-  const onSubmit = async(data:AddUpdatePostFormData) => {
+  const onSubmit = async (data: AddUpdatePostFormData) => {
     console.log('data: ', data);
     //do nothing
   }
@@ -116,11 +115,37 @@ const AdminPostForm = () => {
                 )}
               />
             </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextInput
+                control={control as any}
+                variant='outlined'
+                rules={{}}
+                errors={errors}
+                id='seo_title'
+                name='seo_title'
+                placeholder='Seo Title'
+                label='Seo Title'
+                type='text'
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <CustomTextInput
+                control={control as any}
+                variant='outlined'
+                rules={{}}
+                errors={errors}
+                id='seo_description'
+                name='seo_description'
+                placeholder='Seo Descriptions'
+                label='Seo Descriptions'
+                type='text'
+              />
+            </Grid>
             <Grid item xs={12}>
               <UserPostForm />
             </Grid>
             <Grid item xs={12}>
-              <Box sx={{display:'flex',alignItems:'center',gap:2,mt:3}}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 3 }}>
                 <Button variant='outlined' color='info'>Cancel</Button>
                 <Button variant='contained' onClick={handleSubmit(onSubmit)}>Submit</Button>
               </Box>
