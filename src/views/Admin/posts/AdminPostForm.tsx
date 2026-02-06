@@ -1,14 +1,20 @@
 import React, { useState } from 'react'
 import UserPostForm from '@/components/common/UserPostForm';
 import CustomAutocompleteInput from '@/components/form/CustomAutoCompleteInput';
-import { adminPostUserListDropDownAction } from '@/constants/api/admin/posts';
+import { adminPostCreateAction, adminPostUserListDropDownAction } from '@/constants/api/admin/posts';
 import { addUpdatePostSchema } from '@/constants/schema/admin/postSchema';
 import { stringToColor } from '@/utils/Utils';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Avatar, Box, Button, Card, CardContent, CardHeader, Grid, Typography } from '@mui/material';
-import { useMutation } from '@tanstack/react-query';
+import { Avatar, Box, Button, Card, CardContent, CardHeader, CircularProgress, Divider, Grid, Typography } from '@mui/material';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FormProvider, useForm } from 'react-hook-form';
 import CustomTextInput from '@/components/form/CustomTextInput';
+import CustomSwitch from '@/components/form/CustomSwitch';
+import dayjs from 'dayjs';
+import { useAppSelector } from '@/store';
+import { toast } from 'react-toastify';
+import { globalConfig } from '@/configs/globalConfig';
+import { useRouter } from 'next/navigation';
 
 interface AddUpdatePostFormData {
   id: string | null;
@@ -19,13 +25,13 @@ interface AddUpdatePostFormData {
   content: string;
   excerpt: string | null;
   hero_image: string | null;
-  status: 'draft' | 'published' | 'archived'; //pending
-  is_featured: boolean;                       //pending
-  read_time: number | null;                   //pending
-  tags: string[];                             //pending
+  status: 'draft' | 'published' | 'archived';
+  is_featured: boolean;
+  read_time: number | null;
+  tags: string[];
   seo_title: string | null;
   seo_description: string | null;
-  published_at: Date | null;                  //pending
+  published_at: Date | string | null;
 }
 
 const defaultValues: AddUpdatePostFormData = {
@@ -39,16 +45,19 @@ const defaultValues: AddUpdatePostFormData = {
   hero_image: null,
   status: 'draft',
   is_featured: false,
-  read_time: null, //admin
+  read_time: null,
   tags: [],
-  seo_title: null, //admin
-  seo_description: null, //admin
-  published_at: null,
+  seo_title: null,
+  seo_description: null,
+  published_at: dayjs().toDate(),
 }
 
 
 const AdminPostForm = () => {
   const [users, setUsers] = useState<any[]>([])
+  const isRoAdmin = useAppSelector((state) => state?.auth?.user?.isroadmin)
+  const queryClient = useQueryClient()
+  const router = useRouter();
 
   const methods = useForm<AddUpdatePostFormData>({
     defaultValues,
@@ -72,10 +81,30 @@ const AdminPostForm = () => {
     }
   })
 
-  const onSubmit = async (data: AddUpdatePostFormData) => {
-    console.log('data: ', data);
-    //do nothing
-  }
+  const { mutate, isPending } = useMutation({
+    mutationFn: (data: AddUpdatePostFormData) => {
+      const apiCall = adminPostCreateAction;
+      return apiCall(data);
+    },
+    onSuccess: () => {
+      toast.success('Post created successfully!');
+    },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || 'Something went wrong!';
+      toast.error(message);
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['admin-posts'] });
+    }
+  });
+
+  const onSubmit = async (data: any) => {
+    // if (isRoAdmin) {
+    //   toast.error(globalConfig?.RO_ADMIN_MESSAGE)
+    //   return
+    // }
+    await mutate(data);
+  };
 
   return (
     <FormProvider {...methods}>
@@ -145,9 +174,32 @@ const AdminPostForm = () => {
               <UserPostForm />
             </Grid>
             <Grid item xs={12}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 3 }}>
-                <Button variant='outlined' color='info'>Cancel</Button>
-                <Button variant='contained' onClick={handleSubmit(onSubmit)}>Submit</Button>
+              <CustomTextInput
+                control={control as any}
+                variant='outlined'
+                rules={{}}
+                errors={errors}
+                id='read_time'
+                name='read_time'
+                placeholder='Read Time'
+                type='number'
+              />
+            </Grid>
+            <Divider sx={{ height: 2, width: '100%', my: 5 }} />
+            <Grid item xs={12} sm={6}>
+              <CustomSwitch
+                name="is_featured"
+                label="Featured"
+                control={control}
+                errors={errors}
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
+                <Button variant='outlined' color='info' onClick={() => router.push('/admin/posts')}>Cancel</Button>
+                <Button variant='contained' type='button' disabled={isPending} onClick={handleSubmit(onSubmit)} startIcon={isPending ? <CircularProgress size={20} color='warning' /> : null}>
+                  Submit
+                </Button>
               </Box>
             </Grid>
           </Grid>

@@ -14,10 +14,11 @@ import Color from '@tiptap/extension-color'
 import { Extension } from '@tiptap/core'
 import { lowlight } from '@/lib/lowlight'
 import CustomIconButton from '@/@core/components/mui/IconButton'
-import { Box, Typography, Divider, Dialog, DialogTitle, IconButton,DialogContent, TextField, Button, Tooltip, Popover, MenuItem, Chip } from '@mui/material'
+import { Box, Typography, Divider, Dialog, DialogTitle, IconButton, DialogContent, TextField, Button, Tooltip, Popover, MenuItem, Chip } from '@mui/material'
 import { useMutation } from '@tanstack/react-query'
 import { tempFileUploadAction } from '@/constants/api/temp-upload'
 import ImageResize from 'tiptap-extension-resize-image'
+import { toast } from 'react-toastify'
 
 interface TipTapEditorFieldProps {
   value: string
@@ -76,13 +77,18 @@ const BlogTextEditor = ({
       return tempFileUploadAction(formData)
     },
     onSuccess: (res) => {
+      console.log('res: ', res);
       if (res.success && res.url) {
         editor?.chain().focus().setImage({ src: res.url }).run()
         setTimeout(() => {
           editor?.chain().focus().updateAttributes('image', { 'data-align': 'center' }).run()
         }, 0)
       }
-    }
+    },
+    onError: (err: any) => {
+      const message = err?.response?.data?.message || 'failed to upload image!';
+      toast.error(message)
+    },
   })
 
   const editor = useEditor({
@@ -188,16 +194,24 @@ const BlogTextEditor = ({
     '#0066cc', '#8b00ff', '#ee82ee', '#808080', '#ffffff'
   ]
 
-  const fontSizes = ['12px', '14px', '16px', '18px', '20px', '24px', '28px', '32px', '36px', '48px']
+  const fontSizes = ['12px', '14px', '16px', '18px', '20px', '22px', '24px', '28px', '32px', '36px', '48px']
   const fontFamilies = [
-    'Inter, sans-serif',
-    '"Comic Sans MS", cursive',
-    'serif',
-    'monospace',
-    'cursive',
-    '"Exo 2", sans-serif',
-    'Poppins, sans-serif'
-  ]
+    'Inter, system-ui, sans-serif',
+    'Roboto, "Helvetica Neue", Arial, sans-serif',
+    'Georgia, "Times New Roman", Times, serif',
+    'Verdana, Geneva, Tahoma, sans-serif',
+    'Tahoma, Geneva, sans-serif',
+    'Trebuchet MS, Helvetica, sans-serif',
+    'Arial, Helvetica, sans-serif',
+    '"Segoe UI", Tahoma, Geneva, sans-serif',
+    'Courier New, Courier, monospace',
+    '"Lucida Console", Monaco, monospace',
+    'Palatino Linotype, "Book Antiqua", Palatino, serif',
+    '"Lucida Sans Unicode", "Lucida Grande", sans-serif',
+    '"Gill Sans", "Gill Sans MT", Calibri, sans-serif',
+    'Impact, Haettenschweiler, Arial Narrow Bold, sans-serif',
+    '"Comic Sans MS", cursive, sans-serif'
+  ];
 
   const handleImageClick = () => fileInputRef.current?.click()
 

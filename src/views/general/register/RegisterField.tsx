@@ -7,7 +7,7 @@ import CustomDropzoneInput from '@/components/form/CustomDropzoneInput'
 import Link from 'next/link'
 
 const RegisterField = () => {
-  const { control,trigger ,formState: { errors } } = useFormContext();
+  const { control, trigger, formState: { errors } } = useFormContext();
   const [isPasswordShown, setIsPasswordShown] = useState<boolean>(false)
   const handleClickShowPassword = () => setIsPasswordShown(show => !show)
 
@@ -42,7 +42,11 @@ const RegisterField = () => {
             placeholder='Email'
             label='Email'
             type='email'
-            shrinkLabel
+            extraTextFieldProps={{
+              InputLabelProps: {
+                shrink: true
+              }
+            }}
           />
         </Grid>
         <Grid item xs={12} sm={6}>
@@ -57,7 +61,11 @@ const RegisterField = () => {
             icon={<i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />}
             onIconPress={handleClickShowPassword}
             errors={errors}
-            shrinkLabel
+            extraTextFieldProps={{
+              InputLabelProps: {
+                shrink: true
+              }
+            }}
           />
         </Grid>
         <Grid item xs={12} sm={6}>

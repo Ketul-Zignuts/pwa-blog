@@ -66,7 +66,7 @@ const AdminLogin = ({ mode }: { mode: Mode }) => {
     defaultValues: {
       email: '',
       password: '',
-      type:'admin'
+      type: 'admin'
     },
   });
 
@@ -158,7 +158,11 @@ const AdminLogin = ({ mode }: { mode: Mode }) => {
               placeholder='Email'
               label='Email'
               type='text'
-              shrinkLabel
+              extraTextFieldProps={{
+                InputLabelProps: {
+                  shrink: true
+                }
+              }}
             />
             <CustomTextInput
               id='password'
@@ -171,7 +175,11 @@ const AdminLogin = ({ mode }: { mode: Mode }) => {
               icon={<i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />}
               onIconPress={handleClickShowPassword}
               errors={errors}
-              shrinkLabel
+              extraTextFieldProps={{
+                InputLabelProps: {
+                  shrink: true
+                }
+              }}
             />
             <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
               <Typography

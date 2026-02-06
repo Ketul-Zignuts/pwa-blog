@@ -1,4 +1,4 @@
-import { Box, Button, Chip, Grid, IconButton, Typography } from '@mui/material';
+import { Box, Button, Grid, Typography } from '@mui/material';
 import React, { useEffect, useState } from 'react'
 import { useFieldArray, useFormContext } from 'react-hook-form';
 import CustomAutocompleteInput from '../form/CustomAutoCompleteInput';
@@ -8,6 +8,7 @@ import { slugGetAction } from '@/constants/api/slug';
 import CustomTextInput from '../form/CustomTextInput';
 import CustomTextEditor from '../form/CustomTextEditor';
 import CustomDropzoneInput from '../form/CustomDropzoneInput';
+import CustomDatePicker from '../form/CustomDatePicker';
 
 const UserPostForm = () => {
     const [categoryList, setCategoryList] = useState<any[]>([])
@@ -16,6 +17,7 @@ const UserPostForm = () => {
         control,
         name: 'tags'
     });
+    console.log('watch: ', watch('published_at'));
 
     const categorySearchMutation = useMutation({
         mutationFn: (search: string) => adminPostCategoryListDropDownAction({ search }),
@@ -86,6 +88,7 @@ const UserPostForm = () => {
                     placeholder='Slug'
                     label='Slug'
                     type='text'
+                    disabled={getSlugMutation?.isPending}
                 />
             </Grid>
             <Grid item xs={6}>
@@ -98,6 +101,11 @@ const UserPostForm = () => {
                     name='excerpt'
                     placeholder="Short summary of the post"
                     label={watch('excerpt')?.trim()?.length > 0 ? 'excerpt' : undefined}
+                    extraTextFieldProps={{
+                        InputLabelProps: {
+                            shrink: watch('excerpt')?.trim()?.length > 0 ? true : false
+                        }
+                    }}
                     type='text'
                 />
             </Grid>
@@ -112,7 +120,7 @@ const UserPostForm = () => {
             </Grid>
             <Grid item xs={12}>
                 <Box sx={{ mb: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 5, mt: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 5, mt: 3, flexWrap: 'wrap' }}>
                         <Box sx={{ mb: 2 }}>
                             <Typography variant="body2" sx={{ fontWeight: 600, mb: 0.5, color: 'text.primary' }}>
                                 Post Tags
@@ -132,7 +140,7 @@ const UserPostForm = () => {
                         </Button>
                     </Box>
                     <Grid container spacing={4}>
-                        {fields.map((field, index) => (
+                        {fields.map((_, index) => (
                             <Grid item xs={12} key={index}>
                                 <CustomTextInput
                                     id={`tags.${index}.value`}
@@ -144,7 +152,11 @@ const UserPostForm = () => {
                                     errors={errors}
                                     fullWidth
                                     customMsg={((errors as any)?.tags?.[index]?.message)}
-                                    shrinkLabel
+                                    extraTextFieldProps={{
+                                        InputLabelProps: {
+                                            shrink: true
+                                        }
+                                    }}
                                     icon={<i className="ri-delete-bin-line" />}
                                     iconButtonDisable={fields.length <= 1}
                                     onIconPress={() => fields.length > 1 && remove(index)}
@@ -154,13 +166,35 @@ const UserPostForm = () => {
                     </Grid>
                 </Box>
             </Grid>
-
-            <Grid item xs={12}>
+            <Grid item xs={12} sx={{ mb: 4 }}>
                 <CustomTextEditor
                     name="content"
                     control={control}
                     label="Post Content"
                     rules={{ required: 'Content is required' }}
+                    errors={errors}
+                />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+                <CustomAutocompleteInput
+                    name="status"
+                    label="Post Status"
+                    control={control}
+                    options={[
+                        { value: 'draft', label: 'Draft' },
+                        { value: 'published', label: 'Publish' }
+                    ]}
+                    errors={errors}
+                    labelPlaceHolder='Post Status'
+                />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+                <CustomDatePicker
+                    name="published_at"
+                    control={control}
+                    label="Publish on date"
+                    dateFormat="MMM dd, yyyy"
+                    rules={{ required: true }}
                     errors={errors}
                 />
             </Grid>

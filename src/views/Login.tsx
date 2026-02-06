@@ -71,40 +71,40 @@ const Login = ({ mode }: { mode: Mode }) => {
   });
 
   const { mutate, isPending } = useMutation({
-  mutationFn: (credentials: any) => loginAction(credentials),
-  onMutate: () => {
-    dispatch(setAuthLoading(true))
-  },
-  onSuccess: (userCredential: any) => {
-    const token = userCredential?.token
-    const user = userCredential?.user
+    mutationFn: (credentials: any) => loginAction(credentials),
+    onMutate: () => {
+      dispatch(setAuthLoading(true))
+    },
+    onSuccess: (userCredential: any) => {
+      const token = userCredential?.token
+      const user = userCredential?.user
 
-    if (!user || !token) {
+      if (!user || !token) {
+        dispatch(setAuthLoading(false))
+        return
+      }
+
+      dispatch(
+        setAuthUser({
+          user,
+          token,
+          isAdminLoggedIn: false
+        })
+      )
+
+      toast.success('Login successful!')
+      router.replace('/admin/home')
+    },
+    onError: (err: any) => {
       dispatch(setAuthLoading(false))
-      return
+      const message = err?.response?.data?.message || 'Login failed!';
+      toast.error(message)
+    },
+    onSettled: () => {
+      dispatch(setAuthLoading(false))
+      queryClient.invalidateQueries({ queryKey: ['login'] })
     }
-
-    dispatch(
-      setAuthUser({
-        user,
-        token,
-        isAdminLoggedIn: false
-      })
-    )
-
-    toast.success('Login successful!')
-    router.replace('/admin/home')
-  },
-  onError: (err: any) => {
-    dispatch(setAuthLoading(false))
-    const message = err?.response?.data?.message || 'Login failed!';
-    toast.error(message)
-  },
-  onSettled: () => {
-    dispatch(setAuthLoading(false))
-    queryClient.invalidateQueries({ queryKey: ['login'] })
-  }
-})
+  })
 
   const onSubmit = async (data: LoginProps) => {
     await mutate(data);
@@ -134,7 +134,11 @@ const Login = ({ mode }: { mode: Mode }) => {
                 placeholder='Email'
                 label='Email'
                 type='text'
-                shrinkLabel
+                extraTextFieldProps={{
+                  InputLabelProps: {
+                    shrink: true
+                  }
+                }}
               />
               <CustomTextInput
                 id='password'
@@ -147,7 +151,11 @@ const Login = ({ mode }: { mode: Mode }) => {
                 icon={<i className={isPasswordShown ? 'ri-eye-off-line' : 'ri-eye-line'} />}
                 onIconPress={handleClickShowPassword}
                 errors={errors}
-                shrinkLabel
+                extraTextFieldProps={{
+                  InputLabelProps: {
+                    shrink: true
+                  }
+                }}
               />
               <div className='flex justify-between items-center gap-x-3 gap-y-1 flex-wrap'>
                 <Typography

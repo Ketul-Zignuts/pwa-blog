@@ -1,7 +1,7 @@
 import React from 'react'
 
 //* MUI Imports
-import { TextField, Typography, keyframes, InputAdornment } from '@mui/material'
+import { TextField, Typography, keyframes, InputAdornment, TextFieldProps } from '@mui/material'
 import IconButton from '@mui/material/IconButton'
 
 //* NPM Imports
@@ -32,13 +32,13 @@ interface FormInputProps {
   onKeyDown?: (e: any) => void
   requiredFlag?: boolean
   inputProps?: any
-  // NEW ICON PROPS
   icon?: React.ReactNode
   onIconPress?: () => void
   iconPosition?: 'start' | 'end'
   shrinkLabel?:boolean
   iconButtonDisable?:boolean
   fieldArray?:boolean
+  extraTextFieldProps?: TextFieldProps
 }
 
 const glowAnimation = keyframes`
@@ -83,7 +83,8 @@ function CustomTextInput({
   onIconPress,
   shrinkLabel = false,
   iconButtonDisable = false,
-  fieldArray
+  fieldArray,
+  ...extraTextFieldProps
 }: FormInputProps) {
   const isRequired = requiredFlag || false
 
@@ -115,9 +116,7 @@ function CustomTextInput({
               error={fieldArray ? errors?.[name] : Boolean(errors?.[name])}
               value={value ?? ''}
               inputProps={inputProps}
-              InputLabelProps={{
-                shrink: shrinkLabel ?? false
-              }}
+              {...extraTextFieldProps}
               onChange={val => {
                 const inputValue = val.target.value
                 if (type === 'number' && parseFloat(inputValue) >= 0) {

@@ -4,7 +4,8 @@ import {
   Autocomplete,
   TextField,
   FormHelperText,
-  Box
+  Box,
+  Chip
 } from '@mui/material'
 import { Controller, Control } from 'react-hook-form'
 import { useDebounce } from 'react-use'
@@ -25,7 +26,8 @@ interface Props {
   onSearch?: (q: string) => void
   renderOption?: (option: Option) => React.ReactNode
   debounceMs?: number
-  labelPlaceHolder?:string | undefined
+  labelPlaceHolder?: string
+  multiple?: boolean
 }
 
 const CustomAutocompleteInput = ({
@@ -37,67 +39,109 @@ const CustomAutocompleteInput = ({
   onSearch,
   renderOption,
   debounceMs = 400,
-  labelPlaceHolder = undefined
+  labelPlaceHolder,
+  multiple = false
 }: Props) => {
   const [inputValue, setInputValue] = useState('')
   const [debouncedValue, setDebouncedValue] = useState('')
 
-  // ✅ debounce ONLY user input
   useDebounce(
-    () => {
-      setDebouncedValue(inputValue)
-    },
+    () => setDebouncedValue(inputValue),
     debounceMs,
     [inputValue]
   )
 
-  // ✅ trigger API once, safely
   useEffect(() => {
     onSearch?.(debouncedValue)
-  }, [debouncedValue]) // 👈 remove onSearch from deps
+  }, [debouncedValue])
 
   return (
     <Controller
       name={name}
       control={control}
-      render={({ field }) => (
-        <>
-          <Autocomplete
-            options={options}
-            getOptionLabel={(opt) => opt.label}
-            value={options.find(o => o.value === field.value) || null}
-            inputValue={inputValue}
-            onInputChange={(_, value, reason) => {
-              if (reason === 'input') {
-                setInputValue(value)
-              }
-            }}
-            onChange={(_, val) => {
-              field.onChange(val?.value || '')
-            }}
-            filterOptions={(x) => x} // server-side filtering
-            renderOption={(props, option) => (
-              <Box component="li" {...props}>
-                {renderOption ? renderOption(option) : option.label}
-              </Box>
-            )}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                placeholder={label}
-                label={labelPlaceHolder}
-                error={!!errors?.[name]}
-              />
-            )}
-          />
+      render={({ field }) => {
+        const selectedValue = multiple
+          ? options.filter(o =>
+              Array.isArray(field.value)
+                ? field.value.includes(o.value)
+                : false
+            )
+          : options.find(o => o.value === field.value) || null
 
-          {errors?.[name] && (
-            <FormHelperText error>
-              {errors[name]?.message}
-            </FormHelperText>
-          )}
-        </>
-      )}
+        return (
+          <>
+            <Autocomplete
+              multiple={multiple}
+              options={options}
+              value={selectedValue}
+              inputValue={inputValue}
+              getOptionLabel={(opt) => opt.label}
+              isOptionEqualToValue={(opt, val) =>
+                opt.value === val.value
+              }
+              filterOptions={(x) => x}
+              clearOnEscape
+
+              onInputChange={(_, value, reason) => {
+                if (reason === 'input') {
+                  setInputValue(value)
+                }
+
+                if (reason === 'clear') {
+                  setInputValue('')
+                  field.onChange(multiple ? [] : '')
+                }
+              }}
+
+              onChange={(_, val) => {
+                if (multiple) {
+                  const values = (val as Option[]).map(v => v.value)
+                  field.onChange(values)
+                  setInputValue('')
+                } else {
+                  const option = val as Option | null
+                  field.onChange(option?.value || '')
+                  setInputValue(option?.label || '')
+                }
+              }}
+
+              renderOption={(props, option) => (
+                <Box component="li" {...props}>
+                  {renderOption
+                    ? renderOption(option)
+                    : option.label}
+                </Box>
+              )}
+
+              renderTags={(value, getTagProps) =>
+                value.map((option, index) => (
+                  <Chip
+                    {...getTagProps({ index })}
+                    key={option.value}
+                    label={option.label}
+                    size="small"
+                  />
+                ))
+              }
+
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={labelPlaceHolder}
+                  placeholder={label}
+                  error={!!errors?.[name]}
+                />
+              )}
+            />
+
+            {errors?.[name] && (
+              <FormHelperText error>
+                {errors[name]?.message}
+              </FormHelperText>
+            )}
+          </>
+        )
+      }}
     />
   )
 }

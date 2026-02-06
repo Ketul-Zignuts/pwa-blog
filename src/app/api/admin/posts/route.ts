@@ -3,189 +3,293 @@ import { adminSupabase } from '@/lib/supabase-server'
 import { addUpdatePostSchema } from '@/constants/schema/admin/postSchema'
 import { JSDOM } from 'jsdom'
 
-/* ---------------- HELPERS ---------------- */
+function getFinalPublishedAt(publishedAt: any, status: string): string | null {
+  if (status !== 'published') return null
+
+  if (publishedAt instanceof Date) {
+    return publishedAt.toISOString()
+  }
+
+  if (typeof publishedAt === 'string' && publishedAt) {
+    const date = new Date(publishedAt)
+    return isNaN(date.getTime()) ? new Date().toISOString() : date.toISOString()
+  }
+
+  return new Date().toISOString()
+}
 
 function extractTempImageUrls(html: string): string[] {
   const dom = new JSDOM(html)
   return [...dom.window.document.querySelectorAll('img')]
     .map(img => img.getAttribute('src'))
-    .filter(
-      (src): src is string =>
-        !!src && src.includes('/temp-images/')
-    )
+    .filter((src): src is string => !!src && src.includes('/temp-images/'))
 }
 
 async function moveTempImageToPermanent(
   tempUrl: string,
   postId: string
-): Promise<string> {
-  // extract file path after bucket name
-  const tempPath = tempUrl.split('/temp-images/')[1]
-
-  const fileName = tempPath.split('/').pop()
+): Promise<{ permanentUrl: string; tempPath: string }> {
+  const url = new URL(tempUrl)
+  const tempPath = decodeURIComponent(url.pathname.split('/temp-images/')[1])
+  const fileName = tempPath.split('/').pop()!
   const permanentPath = `posts/${postId}/${Date.now()}-${fileName}`
 
-  // download temp image
-  const { data, error: downloadError } =
-    await adminSupabase.storage
-      .from('temp-images')
-      .download(tempPath)
+  const { data, error: downloadError } = await adminSupabase.storage
+    .from('temp-images')
+    .download(tempPath)
 
   if (downloadError || !data) {
-    throw new Error('Failed to download temp image')
+    throw new Error(`Failed to download temp image: ${tempPath}`)
   }
 
-  // upload to permanent bucket
   const buffer = Buffer.from(await data.arrayBuffer())
+  const { error: uploadError, data: uploadData } = await adminSupabase.storage
+    .from('post-images')
+    .upload(permanentPath, buffer, {
+      upsert: true,
+      contentType: data.type as string || 'image/jpeg'
+    })
 
-  const { error: uploadError } =
-    await adminSupabase.storage
-      .from('post-images')
-      .upload(permanentPath, buffer, { upsert: true })
-
-  if (uploadError) {
-    throw uploadError
+  if (uploadError || !uploadData?.path) {
+    console.error('Upload error:', uploadError)
+    throw new Error(`Failed to upload permanent image: ${permanentPath}`)
   }
 
-  // get permanent public URL
-  const { data: publicUrl } =
-    adminSupabase.storage
-      .from('post-images')
-      .getPublicUrl(permanentPath)
+  const { data: publicUrlData } = adminSupabase.storage
+    .from('post-images')
+    .getPublicUrl(permanentPath)
 
-  return publicUrl.publicUrl
+  return {
+    permanentUrl: publicUrlData.publicUrl,
+    tempPath
+  }
 }
 
 async function finalizePostContent(
   html: string,
   postId: string
-): Promise<string> {
+): Promise<{ finalHtml: string; tempPaths: string[] }> {
   const tempImages = extractTempImageUrls(html)
-
   let finalHtml = html
+  const cleanedTempPaths: string[] = []
 
   for (const tempUrl of tempImages) {
-    const permanentUrl =
-      await moveTempImageToPermanent(tempUrl, postId)
-
-    finalHtml = finalHtml.replaceAll(tempUrl, permanentUrl)
+    try {
+      const { permanentUrl, tempPath } = await moveTempImageToPermanent(tempUrl, postId)
+      finalHtml = finalHtml.replaceAll(tempUrl, permanentUrl)
+      cleanedTempPaths.push(tempPath)
+    } catch (error) {
+      console.error(`❌ Failed to process image ${tempUrl}:`, error)
+    }
   }
 
-  return finalHtml
+  return { finalHtml, tempPaths: cleanedTempPaths }
 }
-
-/* ---------------- API ---------------- */
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json()
+    const contentType = req.headers.get('content-type') || ''
+    let payload: any
 
-    // 1️⃣ validate payload
-    const payload = await addUpdatePostSchema.validate(body, {
-      abortEarly: false,
-      stripUnknown: true
-    })
+    if (contentType.includes('multipart/form-data')) {
+      const formData = await req.formData()
+      payload = {}
+      for (const [key, value] of formData.entries()) {
+        if (value instanceof File) {
+          payload[key] = value
+        } else if (key === 'tags') {
+          payload[key] = JSON.parse(value as string || '[]')
+        } else if (key === 'published_at') {
+          const dateStr = (value as string).replace(/^"|"$/g, '').trim()
+          payload[key] = dateStr ? new Date(dateStr) : null
+        } else if (key === 'read_time') {
+          payload[key] = value ? Number(value) : null
+        } else if (key === 'is_featured') {
+          payload[key] = value === 'true'
+        } else {
+          payload[key] = value || null
+        }
+      }
+    } else {
+      const body = await req.json()
+      payload = await addUpdatePostSchema.validate(body, {
+        abortEarly: false,
+        stripUnknown: true
+      })
+    }
 
     const {
-      id,
       content,
       status,
-      ...rest
+      user_id: clientUserId,
+      category_id,
+      title,
+      slug,
+      excerpt,
+      hero_image,
+      tags,
+      seo_title,
+      seo_description,
+      is_featured,
+      read_time,
+      published_at
     } = payload
 
-    const postId = id ?? crypto.randomUUID()
+    const postId = crypto.randomUUID()
+    const finalUserId = clientUserId
+    
+    let finalHeroImage: string | null = null
+    if (hero_image && hero_image instanceof File) {
+      const timestamp = Date.now()
+      const ext = hero_image.type.split('/')[1]?.replace('jpeg', 'jpg') || 'jpg'
+      const fileName = `hero/${postId}/${timestamp}.${ext}`
 
-    // 2️⃣ move temp images ONLY when saving/publishing
-    const finalContent =
-      status === 'published'
-        ? await finalizePostContent(content, postId)
-        : content
+      const buffer = Buffer.from(await hero_image.arrayBuffer())
+      const { error: uploadError } = await adminSupabase.storage
+        .from('post-images')
+        .upload(fileName, buffer, {
+          upsert: true,
+          contentType: hero_image.type
+        })
 
-    // 3️⃣ upsert post
-    const { data, error } = await adminSupabase
+      if (!uploadError) {
+        finalHeroImage = fileName
+      } else {
+        console.warn('⚠️ Hero image upload failed:', uploadError.message)
+      }
+    }
+
+    let finalContent = content!
+    let tempPathsToCleanup: string[] = []
+
+    if (status === 'published') {
+      const result = await finalizePostContent(content!, postId)
+      finalContent = result.finalHtml
+      tempPathsToCleanup = result.tempPaths
+    }
+
+    const upsertData: any = {
+      id: postId,
+      user_id: finalUserId,
+      category_id: category_id,
+      title: title.trim(),
+      slug: slug.trim(),
+      content: finalContent,
+      excerpt: excerpt || null,
+      hero_image: finalHeroImage,
+      status: status || 'draft',
+      is_featured: Boolean(is_featured),
+      read_time: read_time || null,
+      tags: tags?.filter(Boolean) || [],
+      seo_title: seo_title || null,
+      seo_description: seo_description || null,
+      published_at: getFinalPublishedAt(published_at, status)
+    }
+    
+    const { data: postData, error: upsertError } = await adminSupabase
       .from('posts')
-      .upsert(
-        {
-          id: postId,
-          content: finalContent,
-          status,
-          ...rest,
-          published_at:
-            status === 'published'
-              ? new Date().toISOString()
-              : null,
-          updated_at: new Date().toISOString()
-        },
-        { onConflict: 'id' }
-      )
+      .upsert(upsertData, { onConflict: 'id' })
       .select()
       .single()
 
-    if (error) throw error
+    if (upsertError) {
+      if (upsertError.code === '23505') {
+        return NextResponse.json(
+          { success: false, message: 'Title or slug already exists' },
+          { status: 409 }
+        )
+      }
+      return NextResponse.json(
+        { success: false, message: `Database error: ${upsertError.message}` },
+        { status: 500 }
+      )
+    }
+
+    if (status === 'published' && tempPathsToCleanup.length > 0) {
+      try {
+        const { error: removeError } = await adminSupabase.storage
+          .from('temp-images')
+          .remove(tempPathsToCleanup)
+        const { error: dbCleanupError } = await adminSupabase
+          .from('temp_images')
+          .delete()
+          .in('file_path', tempPathsToCleanup)
+      } catch (cleanupError) {
+        console.error('Cleanup failed (non-critical):', cleanupError)
+      }
+    }
 
     return NextResponse.json(
-      { success: true, data },
+      {
+        success: true,
+        data: postData,
+        message: `Post ${status === 'published' ? 'published' : 'saved as draft'} successfully`
+      },
       { status: 201 }
     )
+
   } catch (err: any) {
+    if (err.name === 'ValidationError') {
+      return NextResponse.json(
+        {
+          success: false,
+          message: 'Validation failed',
+          errors: err.errors
+        },
+        { status: 422 }
+      )
+    }
+
     return NextResponse.json(
       {
         success: false,
-        message: err.errors ?? err.message
+        message: err.message || 'Failed to create/update post'
       },
       { status: 400 }
     )
   }
 }
 
-
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
-
     const page = Number(searchParams.get('page') ?? 1)
     const limit = Number(searchParams.get('limit') ?? 10)
-
     const from = (page - 1) * limit
     const to = from + limit - 1
 
-    const search = searchParams.get('search')
-
-    let query = adminSupabase
+    const { data, count, error } = await adminSupabase
       .from('posts')
-      .select('*', { count: 'exact' })
-      .range(from, to)
+      .select(`
+        id,
+        status,
+        category_id,
+        title,
+        slug,
+        hero_image,
+        user_id,
+        users!inner(uid: user_id):users (
+          displayName,
+          email,
+          photoURL
+        ),
+        categories!inner(category_id):categories (name)
+      `)
       .order('created_at', { ascending: false })
-
-    if (search) {
-      query = query.or(
-        `name.ilike.%${search}%,description.ilike.%${search}%`
-      )
-    }
-
-    const { data, count, error } = await query
+      .range(from, to)
 
     if (error) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, message: error.message }, { status: 400 })
     }
 
     return NextResponse.json({
       success: true,
       data,
       pagination: {
-        page,
-        limit,
-        total: count ?? 0,
-        totalPages: Math.ceil((count ?? 0) / limit),
-      },
+        page, limit, total: count ?? 0, totalPages: Math.ceil((count ?? 0) / limit)
+      }
     })
   } catch (err: any) {
-    return NextResponse.json(
-      { success: false, message: err.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, message: err.message }, { status: 500 })
   }
 }
