@@ -4,7 +4,6 @@ import { adminSupabase, adminStorage } from '@/lib/supabase-server'
 export async function POST(req: NextRequest) {
   try {
     const userId = req.headers.get('x-user-id')
-    console.log('userId: ', userId);
     if (!userId) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
