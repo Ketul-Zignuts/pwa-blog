@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { IconButton, Tooltip, Chip, Button, Box } from '@mui/material'
+import { IconButton, Tooltip, Chip, Button, Box, Breadcrumbs } from '@mui/material'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import {
   adminCategoryDeleteAction,
@@ -15,6 +15,12 @@ import AddCategoryDrawer from './AddCategoryDrawer'
 import { useAppSelector } from '@/store'
 import { toast } from 'react-toastify'
 import { globalConfig } from '@/configs/globalConfig'
+import AppBreadcrumbs from '@/components/common/AppBreadcrumbs'
+
+const path = [
+  { label: 'Home', href: '/admin/home' },
+  { label: 'Category' }
+]
 
 const AdmincategoryView = () => {
   const { confirm } = useConfirm()
@@ -92,6 +98,7 @@ const AdmincategoryView = () => {
 
   return (
     <>
+      <AppBreadcrumbs path={path} />
       <DataTable
         columns={columns}
         data={data}

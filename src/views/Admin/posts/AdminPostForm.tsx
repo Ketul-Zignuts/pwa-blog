@@ -1,7 +1,7 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import UserPostForm from '@/components/common/UserPostForm';
 import CustomAutocompleteInput from '@/components/form/CustomAutoCompleteInput';
-import { adminPostCreateAction, adminPostUserListDropDownAction } from '@/constants/api/admin/posts';
+import { adminPostCreateAction, adminPostUpdateAction, adminPostUserListDropDownAction } from '@/constants/api/admin/posts';
 import { addUpdatePostSchema } from '@/constants/schema/admin/postSchema';
 import { stringToColor } from '@/utils/Utils';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -15,6 +15,7 @@ import { useAppSelector } from '@/store';
 import { toast } from 'react-toastify';
 import { globalConfig } from '@/configs/globalConfig';
 import { useRouter } from 'next/navigation';
+import { PostDetailDataType } from '@/types/postTypes';
 
 interface AddUpdatePostFormData {
   id: string | null;
@@ -52,8 +53,12 @@ const defaultValues: AddUpdatePostFormData = {
   published_at: dayjs().toDate(),
 }
 
+type AdminPostFormTypeProps = {
+  data: PostDetailDataType
+}
 
-const AdminPostForm = () => {
+
+const AdminPostForm = ({ data }: AdminPostFormTypeProps) => {
   const [users, setUsers] = useState<any[]>([])
   const isRoAdmin = useAppSelector((state) => state?.auth?.user?.isroadmin)
   const queryClient = useQueryClient()
@@ -67,6 +72,7 @@ const AdminPostForm = () => {
   const {
     control,
     reset,
+    watch,
     handleSubmit,
     setValue,
     formState: { errors }
@@ -83,11 +89,12 @@ const AdminPostForm = () => {
 
   const { mutate, isPending } = useMutation({
     mutationFn: (data: AddUpdatePostFormData) => {
-      const apiCall = adminPostCreateAction;
+      const apiCall = data?.id ? adminPostUpdateAction : adminPostCreateAction;
       return apiCall(data);
     },
     onSuccess: () => {
-      toast.success('Post created successfully!');
+      router.push('/admin/posts')
+      toast.success(`Post ${data?.id ? 'updated' : 'created'} successfully!`);
     },
     onError: (err: any) => {
       const message = err?.response?.data?.message || 'Something went wrong!';
@@ -106,16 +113,36 @@ const AdminPostForm = () => {
     await mutate(data);
   };
 
+  useEffect(() => {
+    methods?.reset({
+      id: data?.id,
+      user_id: data?.user_id,
+      category_id: data?.category_id,
+      title: data?.title,
+      slug: data?.slug,
+      content: data?.content,
+      excerpt: data?.excerpt || null,
+      hero_image: null,
+      status: data?.status || 'draft',
+      is_featured: data?.is_featured || false,
+      read_time: data?.read_time || null,
+      tags: Array.isArray(data?.tags) && data?.tags?.length > 0 ? data.tags.map((item: string) => ({ value: item })) as any[] : [],
+      seo_title: data?.seo_title || null,
+      seo_description: data?.seo_description || null,
+      published_at: data?.published_at ? dayjs(data?.published_at).toDate() : dayjs().toDate(),
+    })
+  }, [data])
+
   return (
     <FormProvider {...methods}>
       <Card>
         <CardHeader
           title={
             <Typography variant="h6">
-              Create New Post
+              {data?.id ? 'Update Post' : 'Create New Post'}
             </Typography>
           }
-          subheader="Fill out the form below to create a new blog post"
+          subheader={`Fill out the form below to ${data?.id ? 'update' : 'create a new'} blog post`}
         />
         <CardContent>
           <Grid container spacing={2}>
@@ -171,7 +198,7 @@ const AdminPostForm = () => {
               />
             </Grid>
             <Grid item xs={12}>
-              <UserPostForm />
+              <UserPostForm data={data} />
             </Grid>
             <Grid item xs={12}>
               <CustomTextInput

@@ -19,6 +19,9 @@ import { useMutation } from '@tanstack/react-query'
 import { tempFileUploadAction } from '@/constants/api/temp-upload'
 import ImageResize from 'tiptap-extension-resize-image'
 import { toast } from 'react-toastify'
+import { HexColorPicker, HexColorInput } from "react-colorful";
+import { TableKit } from '@tiptap/extension-table'
+import AppReactTextEditor from '@/lib/styles/AppReactTextEditor'
 
 interface TipTapEditorFieldProps {
   value: string
@@ -69,6 +72,8 @@ const BlogTextEditor = ({
   const [colorAnchorEl, setColorAnchorEl] = useState<HTMLElement | null>(null)
   const [sizeAnchorEl, setSizeAnchorEl] = useState<HTMLElement | null>(null)
   const [fontAnchorEl, setFontAnchorEl] = useState<HTMLElement | null>(null)
+  const [currentColor, setCurrentColor] = useState("#000000")
+  const [previewColor, setPreviewColor] = useState("#000000")
 
   const saveImageTemp = useMutation({
     mutationFn: (file: File) => {
@@ -77,7 +82,6 @@ const BlogTextEditor = ({
       return tempFileUploadAction(formData)
     },
     onSuccess: (res) => {
-      console.log('res: ', res);
       if (res.success && res.url) {
         editor?.chain().focus().setImage({ src: res.url }).run()
         setTimeout(() => {
@@ -86,7 +90,7 @@ const BlogTextEditor = ({
       }
     },
     onError: (err: any) => {
-      const message = err?.response?.data?.message || 'failed to upload image!';
+      const message = err?.response?.data?.message || 'failed to upload image!'
       toast.error(message)
     },
   })
@@ -99,9 +103,9 @@ const BlogTextEditor = ({
       CodeBlockLowlight.configure({ lowlight, defaultLanguage: 'plaintext' }),
       TabIndent,
       Underline,
-      TextStyle,        // Required base mark
-      FontSize,         // Font size functionality
-      FontFamily,       // Font family functionality
+      TextStyle,
+      FontSize,
+      FontFamily,
       Color.configure({ types: ['textStyle'] }),
       Placeholder.configure({ placeholder }),
       TextAlign.configure({ types: ['heading', 'paragraph'] }),
@@ -123,16 +127,31 @@ const BlogTextEditor = ({
       }),
       ImageResize.configure({
         inline: false,
-      })
+      }),
+      TableKit.configure({
+        table: {
+          resizable: true,
+          handleWidth: 6,
+          cellMinWidth: 80,
+          lastColumnResizable: true,
+          allowTableNodeSelection: true,
+          renderWrapper: true,
+        }
+      }),
     ],
     content: value || '',
     onUpdate: ({ editor }) => onChange(editor.getHTML())
   })
 
+  // Table helper functions
+  const isTableActive = () => editor?.isActive('table')
+  const isTableRowActive = () => editor?.isActive('tableRow')
+  const isTableCellActive = () => editor?.isActive('tableCell') || editor?.isActive('tableHeader')
+  const isTableHeaderRowActive = () => editor?.isActive('tableHeader')
+
   const isImageAlignActive = useCallback((align: 'left' | 'center' | 'right') => {
     const attrs = editor?.getAttributes('image')
-    console.log('Image attrs:', attrs)
-    return attrs?.['data-align'] === align || false  // Added return!
+    return attrs?.['data-align'] === align || false
   }, [editor])
 
   const setImageAlign = useCallback((align: 'left' | 'center' | 'right') => {
@@ -151,14 +170,24 @@ const BlogTextEditor = ({
     }
   }, [value, editor])
 
-  // ✅ FIXED: Correct v3 commands
   const setTextColor = (color: string) => {
     editor?.chain().focus().setColor(color).run()
+    setCurrentColor(color)
     setColorAnchorEl(null)
+  }
+
+  const previewTextColor = (color: string) => {
+    setPreviewColor(color)
+  }
+
+  const applyTextColor = () => {
+    setTextColor(previewColor)
   }
 
   const unsetTextColor = () => {
     editor?.chain().focus().unsetColor().run()
+    setCurrentColor("#000000")
+    setPreviewColor("#000000")
     setColorAnchorEl(null)
   }
 
@@ -181,7 +210,6 @@ const BlogTextEditor = ({
     editor?.chain().focus().unsetFontFamily().run()
     setFontAnchorEl(null)
   }
-
 
   const isTextColorActive = () => !!editor?.getAttributes('textStyle')?.color
   const getCurrentFontSize = () => editor?.getAttributes('textStyle')?.fontSize || ''
@@ -211,7 +239,7 @@ const BlogTextEditor = ({
     '"Gill Sans", "Gill Sans MT", Calibri, sans-serif',
     'Impact, Haettenschweiler, Arial Narrow Bold, sans-serif',
     '"Comic Sans MS", cursive, sans-serif'
-  ];
+  ]
 
   const handleImageClick = () => fileInputRef.current?.click()
 
@@ -329,10 +357,10 @@ const BlogTextEditor = ({
             </CustomIconButton>
           </Tooltip>
 
+          {/* Dynamic Image Alignment */}
           {canSetImageAlign() && (
             <>
               <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
-
               <Tooltip title="Align Left">
                 <CustomIconButton
                   {...(isImageAlignActive('left') && { color: 'primary' })}
@@ -342,7 +370,6 @@ const BlogTextEditor = ({
                   <i className="ri-align-left" />
                 </CustomIconButton>
               </Tooltip>
-
               <Tooltip title="Align Center">
                 <CustomIconButton
                   {...(isImageAlignActive('center') && { color: 'primary' })}
@@ -352,7 +379,6 @@ const BlogTextEditor = ({
                   <i className="ri-align-center" />
                 </CustomIconButton>
               </Tooltip>
-
               <Tooltip title="Align Right">
                 <CustomIconButton
                   {...(isImageAlignActive('right') && { color: 'primary' })}
@@ -365,6 +391,9 @@ const BlogTextEditor = ({
             </>
           )}
 
+          <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+
+          {/* Lists */}
           <Tooltip title="Bullet List">
             <CustomIconButton
               className={editor.isActive('bulletList') ? 'bg-primary/10' : ''}
@@ -385,7 +414,7 @@ const BlogTextEditor = ({
 
           <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
 
-          {/* Style Controls - ✅ FULLY FIXED */}
+          {/* Style Controls */}
           <Tooltip title="Text Color">
             <CustomIconButton
               {...(isTextColorActive() && { color: 'primary' })}
@@ -419,8 +448,123 @@ const BlogTextEditor = ({
             </CustomIconButton>
           </Tooltip>
 
+          {/* FULL TABLE CONTROLS - Microsoft Word Style */}
+          <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
+          {isTableActive() ? (
+            <>
+              {/* Table Edit Controls */}
+              <Tooltip title="Add Column Before">
+                <CustomIconButton
+                  variant="outlined"
+                  size="small"
+                  onClick={() => editor.chain().focus().addColumnBefore().run()}
+                >
+                  <i className="ri-arrow-left-line text-xs" />
+                </CustomIconButton>
+              </Tooltip>
+              <Tooltip title="Add Column After">
+                <CustomIconButton
+                  variant="outlined"
+                  size="small"
+                  onClick={() => editor.chain().focus().addColumnAfter().run()}
+                >
+                  <i className="ri-arrow-right-line text-xs" />
+                </CustomIconButton>
+              </Tooltip>
+              <Tooltip title="Delete Column">
+                <CustomIconButton
+                  color="error"
+                  variant="outlined"
+                  size="small"
+                  onClick={() => editor.chain().focus().deleteColumn().run()}
+                  disabled={!isTableCellActive()}
+                >
+                  <i className="ri-subtract-line" />
+                </CustomIconButton>
+              </Tooltip>
+              <Tooltip title="Add Row Before">
+                <CustomIconButton
+                  variant="outlined"
+                  size="small"
+                  onClick={() => editor.chain().focus().addRowBefore().run()}
+                >
+                  <i className="ri-arrow-up-line text-xs" />
+                </CustomIconButton>
+              </Tooltip>
+              <Tooltip title="Add Row After">
+                <CustomIconButton
+                  variant="outlined"
+                  size="small"
+                  onClick={() => editor.chain().focus().addRowAfter().run()}
+                >
+                  <i className="ri-arrow-down-line text-xs" />
+                </CustomIconButton>
+              </Tooltip>
+              <Tooltip title="Delete Row">
+                <CustomIconButton
+                  color="error"
+                  variant="outlined"
+                  size="small"
+                  onClick={() => editor.chain().focus().deleteRow().run()}
+                  disabled={!isTableRowActive()}
+                >
+                  <i className="ri-subtract-line" />
+                </CustomIconButton>
+              </Tooltip>
+              <Tooltip title="Delete Table">
+                <CustomIconButton
+                  color="error"
+                  variant="outlined"
+                  size="small"
+                  onClick={() => editor.chain().focus().deleteTable().run()}
+                >
+                  <i className="ri-delete-bin-line" />
+                </CustomIconButton>
+              </Tooltip>
+              <Tooltip title="Merge Cells">
+                <CustomIconButton
+                  variant="outlined"
+                  size="small"
+                  onClick={() => editor.chain().focus().mergeCells().run()}
+                >
+                  <i className="ri-git-branch-line" />
+                </CustomIconButton>
+              </Tooltip>
+              <Tooltip title="Split Cell">
+                <CustomIconButton
+                  variant="outlined"
+                  size="small"
+                  onClick={() => editor.chain().focus().splitCell().run()}
+                >
+                  <i className="ri-split-cells-horizontal" />
+                </CustomIconButton>
+              </Tooltip>
+              <Tooltip title="Toggle Header Row">
+                <CustomIconButton
+                  {...(isTableHeaderRowActive() && { color: 'primary' })}
+                  variant="outlined"
+                  size="small"
+                  onClick={() => editor.chain().focus().toggleHeaderRow().run()}
+                >
+                  <i className="ri-menu-line" />
+                </CustomIconButton>
+              </Tooltip>
+            </>
+          ) : (
+            <Tooltip title="Insert Table">
+              <CustomIconButton
+                variant="outlined"
+                size="small"
+                onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
+              >
+                <i className="ri-table-line" />
+              </CustomIconButton>
+            </Tooltip>
+          )}
+
           <Divider orientation="vertical" flexItem sx={{ mx: 1 }} />
 
+          {/* Media & Code */}
           <Tooltip title="Code Block">
             <CustomIconButton
               {...(editor.isActive('codeBlock') && { color: 'primary' })}
@@ -460,37 +604,110 @@ const BlogTextEditor = ({
         <Popover
           open={Boolean(colorAnchorEl)}
           anchorEl={colorAnchorEl}
-          onClose={() => setColorAnchorEl(null)}
+          onClose={() => {
+            setColorAnchorEl(null)
+            setPreviewColor(currentColor)
+          }}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
           transformOrigin={{ vertical: 'top', horizontal: 'left' }}
+          sx={{ '.MuiPaper-root': { minWidth: 280 } }}
         >
-          <Box sx={{ p: 1, minWidth: 200 }}>
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1, p: 1 }}>
-              {colorPresets.map(color => (
-                <Tooltip key={color} title={color}>
-                  <Chip
-                    size="small"
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: '50%',
-                      backgroundColor: color,
-                      border: '2px solid transparent',
-                      cursor: 'pointer',
-                      '&:hover': { borderColor: 'primary.main' },
-                      ...(editor?.isActive('textStyle', { color }) && {
-                        borderColor: 'primary.main',
-                        transform: 'scale(1.1)'
-                      })
-                    }}
-                    onClick={() => setTextColor(color)}
-                  />
-                </Tooltip>
-              ))}
+          <Box sx={{ p: 2 }}>
+            <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Box sx={{
+                width: 24,
+                height: 24,
+                borderRadius: 1,
+                backgroundColor: previewColor,
+                border: '2px solid',
+                borderColor: 'divider',
+                boxShadow: previewColor === currentColor ? '0 0 0 2px primary.main' : 'none'
+              }} />
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                Preview: <code>{previewColor}</code>
+              </Typography>
             </Box>
-            <Button size="small" fullWidth onClick={unsetTextColor} sx={{ mt: 1 }}>
-              Remove Color
-            </Button>
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="caption" sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>
+                Pick Color
+              </Typography>
+              <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <HexColorPicker
+                  color={previewColor}
+                  onChange={previewTextColor}
+                />
+              </Box>
+            </Box>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="caption" sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>
+                Hex Code
+              </Typography>
+              <HexColorInput
+                color={previewColor}
+                onChange={previewTextColor}
+                style={{
+                  width: '100%',
+                  padding: '8px 12px',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  borderRadius: '6px',
+                  fontSize: '14px',
+                  outline: 'none',
+                }}
+              />
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="caption" sx={{ mb: 1, display: 'block', color: 'text.secondary' }}>
+                Quick Colors
+              </Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: 1 }}>
+                {colorPresets.map(color => (
+                  <Tooltip key={color} title={color}>
+                    <Chip
+                      size="small"
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: '50%',
+                        backgroundColor: color,
+                        border: '2px solid transparent',
+                        cursor: 'pointer',
+                        '&:hover': { borderColor: 'primary.main', transform: 'scale(1.05)' },
+                        ...(previewColor === color && {
+                          borderColor: 'primary.main',
+                          boxShadow: '0 0 0 2px currentColor'
+                        })
+                      }}
+                      onClick={() => previewTextColor(color)}
+                    />
+                  </Tooltip>
+                ))}
+              </Box>
+            </Box>
+
+            <Divider sx={{ height: 2, my: 2 }} />
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button
+                size="small"
+                variant="contained"
+                fullWidth
+                onClick={applyTextColor}
+                sx={{ flex: 1 }}
+              >
+                Apply Color
+              </Button>
+              <Button
+                size="small"
+                variant="outlined"
+                fullWidth
+                onClick={unsetTextColor}
+                sx={{ flex: 1 }}
+              >
+                Remove
+              </Button>
+            </Box>
           </Box>
         </Popover>
 
@@ -577,59 +794,10 @@ const BlogTextEditor = ({
           </DialogContent>
         </Dialog>
 
-        {/* Editor Content */}
-        <Box
-          sx={{
-            p: 2,
-            minHeight: 200,
-            '& .ProseMirror': {
-              minHeight: 150,
-              outline: 'none'
-            },
-            '& img[data-align="left"]': {
-              float: 'left !important',
-              margin: '0 1rem 1rem 0 !important',
-              clear: 'left',
-              maxWidth: '50%'
-            },
-            '& img[data-align="center"]': {
-              display: 'block !important',
-              margin: '0 auto 1rem auto !important',
-              clear: 'both'
-            },
-            '& img[data-align="right"]': {
-              float: 'right !important',
-              margin: '0 0 1rem 1rem !important',
-              clear: 'right',
-              maxWidth: '50%'
-            },
-            '& .ProseMirror a': {
-              color: 'primary.main',
-              textDecoration: 'underline',
-              cursor: 'pointer',
-              '&:hover': {
-                textDecoration: 'underline',
-                opacity: 0.8
-              }
-            },
-            '& pre': {
-              background: '#0b1220',
-              color: '#e5e7eb',
-              padding: '16px',
-              borderRadius: '12px',
-              overflowX: 'auto',
-              fontFamily: 'JetBrains Mono, monospace',
-              fontSize: '14px'
-            },
-            '& pre code': {
-              background: 'none',
-              padding: 0
-            }
-          }}
-          onClick={() => editor.chain().focus().run()}
-        >
+        {/* Editor Content - UPDATED TABLE STYLES */}
+        <AppReactTextEditor onClick={() => editor.chain().focus().run()}>
           <EditorContent editor={editor} />
-        </Box>
+        </AppReactTextEditor>
       </Box>
 
       {error && (

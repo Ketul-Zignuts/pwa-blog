@@ -9,15 +9,19 @@ import CustomTextInput from '../form/CustomTextInput';
 import CustomTextEditor from '../form/CustomTextEditor';
 import CustomDropzoneInput from '../form/CustomDropzoneInput';
 import CustomDatePicker from '../form/CustomDatePicker';
+import { PostDetailDataType } from '@/types/postTypes';
 
-const UserPostForm = () => {
+type UserPostFormProps = {
+    data?:PostDetailDataType
+}
+
+const UserPostForm = ({data} : UserPostFormProps) => {
     const [categoryList, setCategoryList] = useState<any[]>([])
     const { control, watch, setValue, trigger, formState: { errors } } = useFormContext();
     const { fields, append, remove } = useFieldArray({
         control,
         name: 'tags'
     });
-    console.log('watch: ', watch('published_at'));
 
     const categorySearchMutation = useMutation({
         mutationFn: (search: string) => adminPostCategoryListDropDownAction({ search }),
@@ -116,6 +120,7 @@ const UserPostForm = () => {
                     label="Banner Image"
                     errors={errors}
                     trigger={trigger}
+                    oldImage={data?.hero_image ? `${process.env.NEXT_PUBLIC_SUPABASE_BUCKET_URL}/post-images/${data?.hero_image}` : undefined}
                 />
             </Grid>
             <Grid item xs={12}>

@@ -35,7 +35,6 @@ interface FormInputProps {
   icon?: React.ReactNode
   onIconPress?: () => void
   iconPosition?: 'start' | 'end'
-  shrinkLabel?:boolean
   iconButtonDisable?:boolean
   fieldArray?:boolean
   extraTextFieldProps?: TextFieldProps
@@ -81,17 +80,11 @@ function CustomTextInput({
   inputProps,
   icon,
   onIconPress,
-  shrinkLabel = false,
   iconButtonDisable = false,
   fieldArray,
-  ...extraTextFieldProps
+  extraTextFieldProps = {}
 }: FormInputProps) {
   const isRequired = requiredFlag || false
-
-  if(fieldArray){
-
-    console.log('errors?.[name]: ', errors?.[name]);
-  }
 
   return (
     <Box sx={{ width: '100%' }}>

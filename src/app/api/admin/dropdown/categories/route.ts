@@ -6,7 +6,6 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
 
     const search = searchParams.get('search')?.trim() || ''
-    const limit = Number(searchParams.get('limit') || 100)
 
     let query = adminSupabase
       .from('categories')
@@ -21,7 +20,6 @@ export async function GET(req: NextRequest) {
       `)
       .eq('is_active', true)
       .order('name', { ascending: true })
-      .limit(limit)
 
     if (search) {
       query = query.or(`name.ilike.%${search}%,slug.ilike.%${search}%`)

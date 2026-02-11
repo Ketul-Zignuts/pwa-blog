@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
     let query = adminSupabase
       .from('users')
       .select(`
-        id,
+        uid,
         email,
         displayName,
         photoURL
@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     }
 
     const users = (data || []).map(user => ({
-      value: user.id,
+      value: user.uid,
       label: user.displayName || user.email,
       email: user.email,
       avatar: user.photoURL

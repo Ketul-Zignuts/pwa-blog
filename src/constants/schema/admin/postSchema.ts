@@ -39,17 +39,23 @@ export const addUpdatePostSchema = yup.object({
     ),
   excerpt: yup.string().max(300, 'Excerpt too long').nullable(),
   hero_image: yup
-      .mixed<File>()
-      .nullable()
-      .notRequired()
-      .test('fileSize', 'File size must be less than 5MB', (value) => {
-        if (!value || !(value instanceof File)) return true
-        return value.size <= 5 * 1024 * 1024 // 5MB
-      })
-      .test('fileType', 'Only PNG, JPG, WebP images are allowed', (value) => {
-        if (!value || !(value instanceof File)) return true
-        return ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(value.type)
-      }),
+    .mixed<File>()
+    .nullable()
+    .when('id', {
+      is: (id: string | null) => !id,
+      then: schema =>
+        schema.required('Hero image is required'),
+      otherwise: schema =>
+        schema.notRequired(),
+    })
+    .test('fileSize', 'File size must be less than 5MB', value => {
+      if (!value || !(value instanceof File)) return true;
+      return value.size <= 5 * 1024 * 1024;
+    })
+    .test('fileType', 'Only PNG, JPG, WebP images are allowed', value => {
+      if (!value || !(value instanceof File)) return true;
+      return ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(value.type);
+    }),
   status: yup.mixed<'draft' | 'published' | 'archived'>().oneOf(['draft', 'published', 'archived']).required(),
   is_featured: yup.boolean().default(false),
   read_time: yup
@@ -65,7 +71,6 @@ export const addUpdatePostSchema = yup.object({
   tags: yup.array()
     .transform((value, originalValue) => {
       if (Array.isArray(originalValue)) {
-        console.log('originalValue: ', originalValue);
         return originalValue.map(item =>
           typeof item === 'object' && item.value !== undefined
             ? item.value.trim()

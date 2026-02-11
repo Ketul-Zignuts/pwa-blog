@@ -58,8 +58,8 @@ export async function POST(req: NextRequest) {
             user.email?.split('@')[0],
           photoURL: user.user_metadata?.photoURL || '',
           phoneNumber: '',
-          isroadmin:false,
-          isadmin:false,
+          isroadmin: false,
+          isadmin: false,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         })
@@ -78,8 +78,8 @@ export async function POST(req: NextRequest) {
         photoURL: existingUser?.photoURL || '',
         phoneNumber: existingUser?.phoneNumber || '',
         bio: existingUser?.bio || '',
-        isroadmin:existingUser?.isroadmin || false,
-        isadmin:existingUser.isadmin || false,
+        isroadmin: existingUser?.isroadmin || false,
+        isadmin: existingUser.isadmin || false,
       },
       token: session.access_token
     } as UserProfile)
@@ -89,8 +89,9 @@ export async function POST(req: NextRequest) {
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
       path: '/',
-      maxAge: 60 * 60 * 24 * 7
+      maxAge: 60 * 60 * 24 * 30 // 30 days
     })
+
 
     return response
   } catch (error: any) {

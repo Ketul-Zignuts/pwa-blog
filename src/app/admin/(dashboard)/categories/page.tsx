@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import AdmincategoryView from '@/views/Admin/categories/AdmincategoryView'
+import AdmincategoryView from '@/views/Admin/categories/AdminCategoryView'
 
 export const metadata: Metadata = {
   title: 'Create Category | Admin Panel',

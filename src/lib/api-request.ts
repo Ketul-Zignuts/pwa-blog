@@ -26,7 +26,7 @@ const preparePayload = (payload: any) => {
   return hasFile ? formData : payload;
 };
 
-const buildUrl = (url: string, id?: string | number) =>
+const buildUrl = (url: string, id?: string | number | undefined | null) =>
   id ? `${url}/${id}` : url;
 
 /* -------------------- request methods -------------------- */
@@ -52,7 +52,7 @@ export const postRequest = async (
 export const putRequest = async (
   url: string,
   payload?: any,
-  id?: string | number
+  id?: string | number | undefined | null
 ) => {
   const finalUrl = buildUrl(url, id);
   const data = preparePayload(payload);

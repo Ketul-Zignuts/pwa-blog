@@ -137,7 +137,7 @@ export async function POST(req: NextRequest) {
 
     const postId = crypto.randomUUID()
     const finalUserId = clientUserId
-    
+
     let finalHeroImage: string | null = null
     if (hero_image && hero_image instanceof File) {
       const timestamp = Date.now()
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
       seo_description: seo_description || null,
       published_at: getFinalPublishedAt(published_at, status)
     }
-    
+
     const { data: postData, error: upsertError } = await adminSupabase
       .from('posts')
       .upsert(upsertData, { onConflict: 'id' })
@@ -250,46 +250,77 @@ export async function POST(req: NextRequest) {
   }
 }
 
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
+
     const page = Number(searchParams.get('page') ?? 1)
     const limit = Number(searchParams.get('limit') ?? 10)
+
     const from = (page - 1) * limit
     const to = from + limit - 1
 
-    const { data, count, error } = await adminSupabase
+    const search = searchParams.get('search')
+
+    let query = adminSupabase
       .from('posts')
-      .select(`
-        id,
-        status,
-        category_id,
-        title,
-        slug,
-        hero_image,
-        user_id,
-        users!inner(uid: user_id):users (
-          displayName,
-          email,
-          photoURL
-        ),
-        categories!inner(category_id):categories (name)
-      `)
-      .order('created_at', { ascending: false })
+      .select(
+        `
+          id,
+          title,
+          slug,
+          hero_image,
+          status,
+          category:categories (
+            id,
+            name,
+            slug
+          ),
+          user:users!posts_user_id_fkey (
+              id,
+              displayName,
+              email,
+              photoURL
+            )
+      `,
+        { count: 'exact' }
+      )
       .range(from, to)
+      .order('created_at', { ascending: false })
+
+    if (search) {
+      const normalized = search.toLowerCase()
+
+      query = query.or(
+        `title.ilike.%${normalized}%,tags.cs.{${normalized}}`
+      )
+    }
+
+    const { data, count, error } = await query
 
     if (error) {
-      return NextResponse.json({ success: false, message: error.message }, { status: 400 })
+      return NextResponse.json(
+        { success: false, message: error.message },
+        { status: 400 }
+      )
     }
 
     return NextResponse.json({
       success: true,
       data,
       pagination: {
-        page, limit, total: count ?? 0, totalPages: Math.ceil((count ?? 0) / limit)
-      }
+        page,
+        limit,
+        total: count ?? 0,
+        totalPages: Math.ceil((count ?? 0) / limit),
+      },
     })
   } catch (err: any) {
-    return NextResponse.json({ success: false, message: err.message }, { status: 500 })
+    return NextResponse.json(
+      { success: false, message: err.message },
+      { status: 500 }
+    )
   }
 }

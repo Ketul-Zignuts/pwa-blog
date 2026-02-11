@@ -1,14 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { IconButton, Tooltip, Chip, Button, Box } from '@mui/material'
+import { IconButton, Tooltip, Chip, Button, Box, Avatar, Stack, Typography } from '@mui/material'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useConfirm } from '@/hooks/useConfirm'
 import { DataTable } from '@/components/common/DataTable'
 import type { ColumnDef } from '@tanstack/react-table'
-import type { CategoryDataType } from '@/types/categoryTypes'
 import { adminPostDeleteAction, adminPostListAction } from '@/constants/api/admin/posts'
 import { useRouter } from 'next/navigation'
+import { PostDataType } from '@/types/postTypes'
 
 const AdminPostView = () => {
   const { confirm } = useConfirm()
@@ -17,25 +17,21 @@ const AdminPostView = () => {
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
   const [search, setSearch] = useState('')
-  const [openCategoryForm, setOpenCategoryForm] = useState<{ open: boolean, data: CategoryDataType | null }>({
-    open: false,
-    data: null
-  })
 
-  const { data: categoriesData, isLoading } = useQuery({
+  const { data: postsData, isLoading } = useQuery({
     queryKey: ['admin-posts', page, pageSize, search],
     queryFn: async () => {
       const res = await adminPostListAction({
-        page: page + 1, // API is 1-based
+        page: page + 1,
         limit: pageSize,
         search: search || undefined
       })
       return res
     }
   })
-
-  const data: CategoryDataType[] = categoriesData?.data ?? []
-  const rowCount = categoriesData?.pagination?.total ?? 0
+ 
+  const data: PostDataType[] = postsData?.data ?? []
+  const rowCount = postsData?.pagination?.total ?? 0
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminPostDeleteAction(id),
@@ -46,7 +42,7 @@ const AdminPostView = () => {
 
   const handleDelete = async (id: string) => {
     const ok = await confirm({
-      title: 'Delete Category',
+      title: 'Delete Post',
       description: 'This action cannot be undone',
       confirmText: 'Delete'
     })
@@ -54,29 +50,103 @@ const AdminPostView = () => {
     if (ok) deleteMutation.mutate(id)
   }
 
-  const columns: ColumnDef<CategoryDataType>[] = [
-    { accessorKey: 'name', header: 'Name' },
-    { accessorKey: 'slug', header: 'Slug' },
+  const columns: ColumnDef<PostDataType>[] = [
     {
-      accessorKey: 'icon',
-      header: 'Icon',
-      cell: ({ getValue }) => (
-        getValue<boolean>() ? <i className={`${getValue()} text-[22px]`} /> : null
-      )
+      accessorKey: 'title',
+      header: 'Title',
+      cell: ({ row }) => {
+        const post: any = row?.original || {}
+
+        return (
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Avatar
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_BUCKET_URL}/post-images/${post?.hero_image}`}
+              alt={post?.title}
+              variant="rounded"
+              sx={{ width: 40, height: 40 }}
+            />
+            <Typography variant="body2" fontWeight={500}>
+              {post?.title}
+            </Typography>
+          </Stack>
+        )
+      },
     },
-    { accessorKey: 'description', header: 'Description' },
+
     {
-      accessorKey: 'is_active',
-      header: 'Status',
+      accessorKey: 'slug',
+      header: 'Slug',
       cell: ({ getValue }) => (
-        <Chip
-          label={getValue<boolean>() ? 'Active' : 'Inactive'}
-          color={getValue<boolean>() ? 'success' : 'error'}
-          variant="tonal"
-          size="small"
-        />
-      )
-    }
+        <Typography variant="body2" color="text.secondary">
+          {getValue<string>()}
+        </Typography>
+      ),
+    },
+
+    {
+      accessorKey: 'category',
+      header: 'Category',
+      cell: ({ row }) => {
+        const category = row?.original?.category
+
+        return (
+          <Typography variant="body2">
+            {category?.name}
+          </Typography>
+        )
+      },
+    },
+
+    {
+      id: 'author',
+      header: 'Author',
+      cell: ({ row }) => {
+        const user: any = row?.original?.user
+
+        return (
+          <Stack direction="row" spacing={2} alignItems="center">
+            <Avatar src={user?.photoURL} alt={user?.displayName} />
+            <Stack>
+              <Typography variant="body2" fontWeight={500}>
+                {user?.displayName}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {user?.email}
+              </Typography>
+            </Stack>
+          </Stack>
+        )
+      },
+    },
+
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      cell: ({ getValue }) => {
+        const status = getValue<'draft' | 'published' | 'archived'>()
+
+        return (
+          <Chip
+            label={
+              status === 'draft'
+                ? 'Draft'
+                : status === 'published'
+                  ? 'Published'
+                  : 'Archived'
+            }
+            color={
+              status === 'published'
+                ? 'success'
+                : status === 'draft'
+                  ? 'warning'
+                  : 'default'
+            }
+            variant="tonal"
+            size="small"
+          />
+        )
+      },
+    },
   ]
 
   return (
@@ -112,7 +182,7 @@ const AdminPostView = () => {
             <Tooltip title='Edit'>
               <IconButton
                 size='small'
-                onClick={() => router.push(`/admin/posts/${row?.slug}`)}
+                onClick={() => router.push(`/admin/posts/${row?.id}`)}
                 disabled={deleteMutation.isPending}
                 color='primary'
               >

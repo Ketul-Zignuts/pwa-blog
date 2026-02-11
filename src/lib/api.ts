@@ -1,5 +1,4 @@
 import axios from 'axios';
-import Router from 'next/router';
 import { toast } from 'react-toastify';
 
 let isLoggingOut = false;
@@ -38,29 +37,59 @@ api.interceptors.request.use(
 );
 
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    const newToken = response.headers?.['x-new-access-token'];
+
+    if (newToken) {
+      try {
+        const storage = localStorage.getItem('blog-master-auth');
+        const tokenData = storage ? JSON.parse(storage) : null;
+
+        if (tokenData && tokenData.token !== newToken) {
+          localStorage.setItem('blog-master-auth',
+            JSON.stringify({
+              ...tokenData,
+              token: newToken,
+            })
+          );
+        }
+      } catch (err) {
+        console.error('Failed to persist refreshed token', err);
+      }
+    }
+
+    return response;
+  },
   async (error) => {
     const status = error?.response?.status;
+    
+    const refreshedToken =
+      error?.response?.headers?.['x-new-access-token'];
 
+    if (refreshedToken) {
+      return Promise.reject(error);
+    }
+    
     if (status === 401 && !isLoggingOut) {
       isLoggingOut = true;
 
       try {
         localStorage.removeItem('blog-master-auth');
-        localStorage.clear();
 
         toast.error('Session expired. Please log in again.', {
           toastId: 'session-expired',
         });
 
-        const isAdminRoute = typeof window !== 'undefined' && window.location.pathname.startsWith('/admin/');
-        const redirectPath = isAdminRoute ? '/admin/login' : '/login';
+        const isAdminRoute =
+          typeof window !== 'undefined' &&
+          window.location.pathname.startsWith('/admin/');
+        const redirectPath = isAdminRoute
+          ? '/admin/login'
+          : '/login';
 
         setTimeout(() => {
           if (typeof window !== 'undefined') {
             window.location.href = redirectPath;
-          } else {
-            Router.replace(redirectPath);
           }
         }, 300);
       } catch (err) {
