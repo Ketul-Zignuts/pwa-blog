@@ -16,6 +16,7 @@ import { toast } from 'react-toastify';
 import { globalConfig } from '@/configs/globalConfig';
 import { useRouter } from 'next/navigation';
 import { PostDetailDataType } from '@/types/postTypes';
+import AppBreadcrumbs from '@/components/common/AppBreadcrumbs';
 
 interface AddUpdatePostFormData {
   id: string | null;
@@ -55,14 +56,21 @@ const defaultValues: AddUpdatePostFormData = {
 
 type AdminPostFormTypeProps = {
   data: PostDetailDataType
+  fromEdit?: boolean
 }
 
 
-const AdminPostForm = ({ data }: AdminPostFormTypeProps) => {
+const AdminPostForm = ({ data, fromEdit }: AdminPostFormTypeProps) => {
   const [users, setUsers] = useState<any[]>([])
   const isRoAdmin = useAppSelector((state) => state?.auth?.user?.isroadmin)
   const queryClient = useQueryClient()
   const router = useRouter();
+
+  const path = [
+    { label: 'Home', href: '/admin/home' },
+    { label: 'Posts', href: '/admin/posts' },
+    { label: `${fromEdit ? 'Update' : 'Create'} Posts` }
+  ]
 
   const methods = useForm<AddUpdatePostFormData>({
     defaultValues,
@@ -134,15 +142,17 @@ const AdminPostForm = ({ data }: AdminPostFormTypeProps) => {
   }, [data])
 
   return (
+    <>
+    <AppBreadcrumbs path={path} />
     <FormProvider {...methods}>
       <Card>
         <CardHeader
           title={
             <Typography variant="h6">
-              {data?.id ? 'Update Post' : 'Create New Post'}
+              {fromEdit ? 'Update Post' : 'Create New Post'}
             </Typography>
           }
-          subheader={`Fill out the form below to ${data?.id ? 'update' : 'create a new'} blog post`}
+          subheader={`Fill out the form below to ${fromEdit ? 'update' : 'create a new'} blog post`}
         />
         <CardContent>
           <Grid container spacing={2}>
@@ -233,6 +243,7 @@ const AdminPostForm = ({ data }: AdminPostFormTypeProps) => {
         </CardContent>
       </Card>
     </FormProvider>
+    </>
   )
 }
 

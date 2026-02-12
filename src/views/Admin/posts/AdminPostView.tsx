@@ -1,22 +1,58 @@
 'use client'
 
-import { useState } from 'react'
-import { IconButton, Tooltip, Chip, Button, Box, Avatar, Stack, Typography } from '@mui/material'
+import { useState, useCallback } from 'react'
+import {
+  GridColDef,
+  GridRenderCellParams,
+  GridRowParams,
+  GridActionsCellItem,
+  type GridPaginationModel
+} from '@mui/x-data-grid'
+import {
+  Avatar,
+  Chip,
+  Stack,
+  Typography,
+  Button,
+  Tooltip,
+  IconButton
+} from '@mui/material'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useConfirm } from '@/hooks/useConfirm'
-import { DataTable } from '@/components/common/DataTable'
-import type { ColumnDef } from '@tanstack/react-table'
+import { DataGridTable } from '@/components/common/DataGridTable'
 import { adminPostDeleteAction, adminPostListAction } from '@/constants/api/admin/posts'
 import { useRouter } from 'next/navigation'
 import { PostDataType } from '@/types/postTypes'
+import AppBreadcrumbs from '@/components/common/AppBreadcrumbs'
+
+const path = [
+  { label: 'Home', href: '/admin/home' },
+  { label: 'Posts' }
+]
 
 const AdminPostView = () => {
   const { confirm } = useConfirm()
   const queryClient = useQueryClient()
-  const router = useRouter();
+  const router = useRouter()
+
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
   const [search, setSearch] = useState('')
+
+  // ✅ TANSTACK PATTERN - Works perfectly!
+  const handlePaginationChange = useCallback((newModel: GridPaginationModel) => {
+    console.log('Pagination change:', newModel)
+
+    // EXACT TanStack pattern: reset page when pageSize changes
+    if (newModel.pageSize !== pageSize) {
+      setPage(0)  // Always reset to page 0
+      setPageSize(newModel.pageSize)
+      return
+    }
+
+    // Normal page change
+    setPage(newModel.page)
+  }, [pageSize])
 
   const { data: postsData, isLoading } = useQuery({
     queryKey: ['admin-posts', page, pageSize, search],
@@ -24,12 +60,14 @@ const AdminPostView = () => {
       const res = await adminPostListAction({
         page: page + 1,
         limit: pageSize,
-        search: search || undefined
+        search
       })
       return res
-    }
+    },
+    staleTime: 1000,
+    gcTime: 5 * 60 * 1000,
   })
- 
+
   const data: PostDataType[] = postsData?.data ?? []
   const rowCount = postsData?.pagination?.total ?? 0
 
@@ -37,6 +75,7 @@ const AdminPostView = () => {
     mutationFn: (id: string) => adminPostDeleteAction(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-posts'] })
+      setPage(0)
     }
   })
 
@@ -46,66 +85,72 @@ const AdminPostView = () => {
       description: 'This action cannot be undone',
       confirmText: 'Delete'
     })
-
     if (ok) deleteMutation.mutate(id)
   }
 
-  const columns: ColumnDef<PostDataType>[] = [
+  const columns: GridColDef[] = [
     {
-      accessorKey: 'title',
-      header: 'Title',
-      cell: ({ row }) => {
-        const post: any = row?.original || {}
-
-        return (
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar
-              src={`${process.env.NEXT_PUBLIC_SUPABASE_BUCKET_URL}/post-images/${post?.hero_image}`}
-              alt={post?.title}
-              variant="rounded"
-              sx={{ width: 40, height: 40 }}
-            />
-            <Typography variant="body2" fontWeight={500}>
-              {post?.title}
-            </Typography>
-          </Stack>
-        )
+      field: 'index',
+      headerName: '#',
+      width: 60,
+      renderCell: (params: GridRenderCellParams) => {
+        const rowIndex = data.findIndex(row => row?.id === params.id)
+        const index = page * pageSize + (rowIndex + 1)
+        return index
       },
+      sortable: false,
+      filterable: false,
+      editable: false,
+      resizable: false,
+      disableColumnMenu: true,
+      align: 'center',
+      headerAlign: 'center',
     },
-
     {
-      accessorKey: 'slug',
-      header: 'Slug',
-      cell: ({ getValue }) => (
-        <Typography variant="body2" color="text.secondary">
-          {getValue<string>()}
-        </Typography>
+      field: 'title',
+      headerName: 'Title',
+      minWidth: 280,
+      sortable: true,
+      filterable: true,
+      renderCell: ({ row }: GridRenderCellParams) => (
+        <Stack direction="row" spacing={2} alignItems="center">
+          <Avatar
+            src={`${process.env.NEXT_PUBLIC_SUPABASE_BUCKET_URL}/post-images/${row.hero_image}`}
+            alt={row.title}
+            variant="rounded"
+            sx={{ width: 50, height: 50 }}
+          />
+          <Typography variant="body2" fontWeight={500} noWrap>
+            {row.title}
+          </Typography>
+        </Stack>
       ),
     },
-
     {
-      accessorKey: 'category',
-      header: 'Category',
-      cell: ({ row }) => {
-        const category = row?.original?.category
-
-        return (
-          <Typography variant="body2">
-            {category?.name}
-          </Typography>
-        )
-      },
+      field: 'slug',
+      headerName: 'Slug',
+      sortable: true,
+      filterable: true,
+      minWidth: 200,
     },
-
     {
-      id: 'author',
-      header: 'Author',
-      cell: ({ row }) => {
-        const user: any = row?.original?.user
-
+      field: 'category',
+      headerName: 'Category',
+      sortable: true,
+      filterable: true,
+      minWidth: 200,
+      renderCell: ({ row }) => row?.category?.name || '',
+    },
+    {
+      field: 'author',
+      headerName: 'Author',
+      minWidth: 350,
+      sortable: false,
+      renderCell: ({ row }: GridRenderCellParams) => {
+        const user = row?.user
         return (
           <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar src={user?.photoURL} alt={user?.displayName} />
+            <Avatar src={user?.photoURL} alt={user?.displayName} sx={{ width: 50, height: 50 }} />
             <Stack>
               <Typography variant="body2" fontWeight={500}>
                 {user?.displayName}
@@ -118,90 +163,102 @@ const AdminPostView = () => {
         )
       },
     },
-
     {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ getValue }) => {
-        const status = getValue<'draft' | 'published' | 'archived'>()
-
-        return (
-          <Chip
-            label={
-              status === 'draft'
-                ? 'Draft'
-                : status === 'published'
-                  ? 'Published'
-                  : 'Archived'
-            }
-            color={
-              status === 'published'
-                ? 'success'
-                : status === 'draft'
-                  ? 'warning'
-                  : 'default'
-            }
-            variant="tonal"
-            size="small"
-          />
-        )
-      },
+      field: 'status',
+      headerName: 'Status',
+      minWidth: 180,
+      sortable: true,
+      filterable: true,
+      renderCell: ({ value }: GridRenderCellParams) => (
+        <Chip
+          label={
+            value === 'draft' ? 'Draft' :
+              value === 'published' ? 'Published' : 'Archived'
+          }
+          color={
+            value === 'published' ? 'success' :
+              value === 'draft' ? 'warning' : 'default'
+          }
+          variant="tonal"
+          size="small"
+        />
+      ),
     },
-  ]
-
-  return (
-    <>
-      <DataTable
-        columns={columns}
-        data={data}
-        page={page}
-        pageSize={pageSize}
-        rowCount={rowCount}
-        isLoading={isLoading || deleteMutation.isPending}
-        onPageChange={setPage}
-        onPageSizeChange={size => {
-          setPageSize(size)
-          setPage(0)
-        }}
-        onGlobalFilterChange={value => {
-          setSearch(value)
-          setPage(0)
-        }}
-        renderAddAction={() => (
-          <Button
-            color='primary'
-            variant='contained'
-            startIcon={<i className='ri-add-line text-[22px]' />}
-            onClick={() => router.push('/admin/posts/create')}
-          >
-            Add Post
-          </Button>
-        )}
-        renderRowActions={row => (
-          <Box>
-            <Tooltip title='Edit'>
-              <IconButton
-                size='small'
-                onClick={() => router.push(`/admin/posts/${row?.id}`)}
-                disabled={deleteMutation.isPending}
-                color='primary'
-              >
+    {
+      field: 'actions',
+      type: 'actions',
+      headerName: 'Actions',
+      sortable: false,
+      filterable: false,
+      editable: false,
+      resizable: false,
+      disableColumnMenu: true,
+      align: 'center',
+      headerAlign: 'center',
+      minWidth:120,
+      getActions: (params: GridRowParams) => [
+        <GridActionsCellItem
+          key="edit"
+          icon={
+            <Tooltip title="Edit">
+              <IconButton size="small" color="primary">
                 <i className='ri-edit-line text-[22px]' />
               </IconButton>
             </Tooltip>
-            <Tooltip title='Delete'>
-              <IconButton
-                size='small'
-                onClick={() => handleDelete(row?.id || '')}
-                disabled={deleteMutation.isPending}
-                color='error'
-              >
+          }
+          label="Edit"
+          onClick={() => router.push(`/admin/posts/${params.id}`)}
+          disabled={deleteMutation.isPending}
+        />,
+        <GridActionsCellItem
+          key="delete"
+          icon={
+            <Tooltip title="Delete">
+              <IconButton size="small" color="error">
                 <i className='ri-delete-bin-line text-[22px]' />
               </IconButton>
             </Tooltip>
-          </Box>
-        )}
-      />
+          }
+          label="Delete"
+          onClick={() => handleDelete(params.id as string)}
+          disabled={deleteMutation.isPending}
+        />,
+      ],
+    },
+  ]
+
+const handleSearchChange = useCallback((value: string) => {
+  if (value === search) return
+  setPage(0)
+  setSearch(value)
+}, [search])
+
+  const addAction = (
+    <Button
+      variant="contained"
+      startIcon={<i className='ri-add-line text-[22px]' />}
+      onClick={() => router.push('/admin/posts/create')}
+    >
+      Add Post
+    </Button>
+  )
+
+  const paginationModel: GridPaginationModel = { page, pageSize }
+
+  return (
+    <>
+    <AppBreadcrumbs path={path} />
+    <DataGridTable
+      columns={columns}
+      rows={data}
+      rowCount={rowCount}
+      paginationModel={paginationModel}
+      onPaginationModelChange={handlePaginationChange}
+      isLoading={isLoading || deleteMutation.isPending}
+      addAction={addAction}
+      searchValue={search}
+      onSearchChange={handleSearchChange}
+    />
     </>
   )
 }
