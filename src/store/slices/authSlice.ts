@@ -35,9 +35,12 @@ export const authSlice = createSlice({
       state.isAdminLoggedIn = false
       state.authUserLoading = false
     },
+    updateUser:(state, action: PayloadAction<any>) =>{
+      state.user = action.payload
+    }
   }
 })
 
-export const { setAuthUser,setAuthLoading,authLogout } = authSlice.actions
+export const { setAuthUser,setAuthLoading,authLogout,updateUser } = authSlice.actions
 
 export default authSlice.reducer

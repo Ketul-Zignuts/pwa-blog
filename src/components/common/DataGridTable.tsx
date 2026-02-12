@@ -23,6 +23,7 @@ interface DataGridTableProps<T extends GridValidRowModel> {
   getRowId?: (row: T) => GridRowId
   searchValue?: string
   onSearchChange?: (value: string) => void
+  rowHeight?: number
 }
 
 export function DataGridTable<T extends GridValidRowModel>({
@@ -36,7 +37,8 @@ export function DataGridTable<T extends GridValidRowModel>({
   height = 700,
   getRowId,
   searchValue,
-  onSearchChange
+  onSearchChange,
+  rowHeight = 52
 }: DataGridTableProps<T>) {
 
   const CustomToolbar = () => (
@@ -69,6 +71,7 @@ export function DataGridTable<T extends GridValidRowModel>({
     <Box sx={{ height, width: '100%' }}>
       <DataGrid
         rows={rows}
+        rowHeight={rowHeight}
         columns={columns}
         paginationMode="server"
         paginationModel={paginationModel}
@@ -87,13 +90,21 @@ export function DataGridTable<T extends GridValidRowModel>({
         showToolbar
         sx={{
           border: 'none',
+
           '& .MuiDataGrid-columnHeaders': {
             backgroundColor: 'rgba(25, 118, 210, 0.08)',
             fontWeight: 600,
           },
-          '& .MuiDataGrid-row': {
-            backgrborderBottom: '1px solid rgba(224, 224, 227, 1)',
+
+          '& .MuiDataGrid-cell': {
+            display: 'flex',
+            alignItems: 'center',
           },
+
+          '& .MuiDataGrid-row': {
+            borderBottom: '1px solid rgba(224, 224, 227, 1)',
+          },
+
           '& .MuiDataGrid-row:hover': {
             backgroundColor: 'rgba(25, 118, 210, 0.04)',
           },

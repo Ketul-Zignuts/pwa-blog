@@ -32,6 +32,9 @@ export async function GET(req: NextRequest) {
           slug,
           hero_image,
           status,
+          views,
+          likes,
+          created_at,
           category:categories (
             id,
             name,

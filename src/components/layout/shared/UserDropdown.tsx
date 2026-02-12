@@ -47,6 +47,7 @@ const UserDropdown = () => {
   const [open, setOpen] = useState(false)
   const anchorRef = useRef<HTMLDivElement>(null)
   const isAdminLoggedIn = useAppSelector((state)=>state.auth.isAdminLoggedIn)
+  const user = useAppSelector((state)=>state.auth.user)
 
   const { settings } = useSettings()
 
@@ -97,8 +98,8 @@ const UserDropdown = () => {
       >
         <Avatar
           ref={anchorRef}
-          alt='John Doe'
-          src='/images/avatars/1.png'
+          alt={user?.displayName}
+          src={user?.photoURL || '/images/avatars/1.png'}
           onClick={handleDropdownOpen}
           className='cursor-pointer bs-[38px] is-[38px]'
         />
@@ -122,12 +123,12 @@ const UserDropdown = () => {
               <ClickAwayListener onClickAway={e => handleDropdownClose(e as MouseEvent | TouchEvent)}>
                 <MenuList>
                   <div className='flex items-center plb-2 pli-4 gap-2' tabIndex={-1}>
-                    <Avatar alt='John Doe' src='/images/avatars/1.png' />
+                    <Avatar alt={user?.displayName} src={user?.photoURL || '/images/avatars/1.png'} />
                     <div className='flex items-start flex-col'>
                       <Typography className='font-medium' color='text.primary'>
-                        John Doe
+                        {user?.displayName}
                       </Typography>
-                      <Typography variant='caption'>admin@materio.com</Typography>
+                      <Typography variant='caption'>{user?.email || user?.phoneNumber || ''}</Typography>
                     </div>
                   </div>
                   <Divider className='mlb-1' />

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { adminSupabase, adminStorage } from '@/lib/supabase-server'
+import { adminSupabase } from '@/lib/supabase-server'
 
 export async function PUT(req: NextRequest) {
   try {
@@ -12,121 +12,76 @@ export async function PUT(req: NextRequest) {
       )
     }
 
-    const body = await req.formData()
+    const { displayName, phoneNumber, bio } = await req.json()
 
-    const displayName = body.get('displayName') as string | null
-    const phoneNumber = body.get('phoneNumber') as string | null
-    const bio = body.get('bio') as string | null
-    const photoURLFile = body.get('photoURL') as File | null
+    let formattedPhoneNumber: string | undefined
 
-    const { data: userData, error: userError } =
-      await adminSupabase.auth.admin.getUserById(uid)
-
-    if (userError || !userData?.user) {
-      return NextResponse.json(
-        { success: false, message: 'User not found' },
-        { status: 404 }
-      )
-    }
-
-    const email = userData.user.email!
-    const currentMetadata = userData.user.user_metadata || {}
-
-    let finalPhotoURL = currentMetadata.photoURL || ''
-
-    if (photoURLFile && photoURLFile.size > 0) {
-      const buffer = Buffer.from(await photoURLFile.arrayBuffer())
-      finalPhotoURL = await uploadProfileImage(
-        buffer,
-        email,
-        photoURLFile.type
-      )
-    }
-
-    let formattedPhoneNumber = currentMetadata.phoneNumber || ''
-
-    if (phoneNumber) {
-      const cleaned = phoneNumber.replace(/\D/g, '')
-
-      if (cleaned.length === 10) {
-        formattedPhoneNumber = `+91${cleaned}`
-      } else if (cleaned.length === 12 && cleaned.startsWith('91')) {
-        formattedPhoneNumber = `+${cleaned}`
-      } else if (phoneNumber.startsWith('+')) {
-        formattedPhoneNumber = phoneNumber
+    if (phoneNumber !== undefined) {
+      if (phoneNumber === '') {
+        formattedPhoneNumber = ''
       } else {
-        return NextResponse.json({
-          success: false,
-          message: 'Invalid phone number format'
-        })
+        const cleaned = phoneNumber.replace(/\D/g, '')
+
+        if (cleaned.length === 10) {
+          formattedPhoneNumber = `+91${cleaned}`
+        } else if (cleaned.length === 12 && cleaned.startsWith('91')) {
+          formattedPhoneNumber = `+${cleaned}`
+        } else if (phoneNumber.startsWith('+')) {
+          formattedPhoneNumber = phoneNumber
+        } else {
+          return NextResponse.json(
+            { success: false, message: 'Invalid phone number format' },
+            { status: 400 }
+          )
+        }
       }
     }
 
-    const { error: updateAuthError } =
-      await adminSupabase.auth.admin.updateUserById(uid, {
-        user_metadata: {
-          ...currentMetadata,
-          displayName:
-            displayName ?? currentMetadata.displayName,
-          phoneNumber: formattedPhoneNumber,
-          photoURL: finalPhotoURL,
-          bio: bio ?? currentMetadata.bio ?? ''
-        }
-      })
-
-    if (updateAuthError) {
-      throw new Error(updateAuthError.message)
+    const updatePayload: any = {
+      updated_at: new Date().toISOString()
     }
 
-    const { error: updateProfileError } = await adminSupabase
+    if (displayName !== undefined)
+      updatePayload.displayName = displayName
+
+    if (formattedPhoneNumber !== undefined)
+      updatePayload.phoneNumber = formattedPhoneNumber
+
+    if (bio !== undefined) updatePayload.bio = bio
+
+    const { data, error } = await adminSupabase
       .from('users')
-      .update({
-        displayName:
-          displayName ?? currentMetadata.displayName,
-        phoneNumber: formattedPhoneNumber,
-        photoURL: finalPhotoURL,
-        bio: bio ?? ''
-      })
+      .update(updatePayload)
       .eq('uid', uid)
+      .select('bio, displayName, phoneNumber')
+      .single()
 
-    if (updateProfileError) {
-      throw new Error(updateProfileError.message)
+    if (error) {
+      console.error('Profile update error:', error)
+      throw new Error('Failed to update profile')
     }
+
+    await adminSupabase.auth.admin.updateUserById(uid, {
+      user_metadata: {
+        ...(displayName !== undefined && { displayName }),
+        ...(formattedPhoneNumber !== undefined && {
+          phoneNumber: formattedPhoneNumber
+        })
+      }
+    })
 
     return NextResponse.json({
       success: true,
-      message: 'Profile updated successfully'
+      message: 'Profile updated successfully',
+      bio: data?.bio ?? '',
+      displayName: data?.displayName ?? '',
+      phoneNumber: data?.phoneNumber ?? ''
     })
   } catch (error: any) {
-    console.error('Profile update error:', error)
-
+    console.error('Update error:', error)
     return NextResponse.json(
-      {
-        success: false,
-        message: error.message || 'Profile update failed'
-      },
+      { success: false, message: error.message || 'Update failed' },
       { status: 500 }
     )
   }
-}
-
-async function uploadProfileImage(
-  buffer: Buffer,
-  email: string,
-  contentType: string
-): Promise<string> {
-  const timestamp = Date.now()
-  const ext = contentType.split('/')[1] || 'jpg'
-  const filename = `profiles/${email.replace(/[@.]/g, '_')}_${timestamp}.${ext}`
-
-  const { error } = await adminStorage
-    .bucket('profile-images')
-    .upload(filename, buffer, {
-      contentType,
-      upsert: true
-    })
-
-  if (error) throw error
-
-  return `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/profile-images/${filename}`
 }

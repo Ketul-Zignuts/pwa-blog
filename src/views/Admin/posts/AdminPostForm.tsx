@@ -114,10 +114,10 @@ const AdminPostForm = ({ data, fromEdit }: AdminPostFormTypeProps) => {
   });
 
   const onSubmit = async (data: any) => {
-    // if (isRoAdmin) {
-    //   toast.error(globalConfig?.RO_ADMIN_MESSAGE)
-    //   return
-    // }
+    if (isRoAdmin) {
+      toast.error(globalConfig?.RO_ADMIN_MESSAGE)
+      return
+    }
     await mutate(data);
   };
 

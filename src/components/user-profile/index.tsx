@@ -10,14 +10,11 @@ import Tab from '@mui/material/Tab'
 import TabContext from '@mui/lab/TabContext'
 import TabPanel from '@mui/lab/TabPanel'
 
-// Type Imports
-import type { Data } from '@/types/profileTypes'
-
 // Component Imports
 import UserProfileHeader from './UserProfileHeader'
 import CustomTabList from '@core/components/mui/TabList'
 
-const UserProfile = ({ tabContentList, data }: { tabContentList: { [key: string]: ReactElement }; data?: Data }) => {
+const UserProfile = ({ tabContentList }: { tabContentList: { [key: string]: ReactElement } }) => {
   // States
   const [activeTab, setActiveTab] = useState('profile')
 
@@ -46,29 +43,20 @@ const UserProfile = ({ tabContentList, data }: { tabContentList: { [key: string]
               <Tab
                 label={
                   <div className='flex items-center gap-1.5'>
-                    <i className='ri-team-line text-lg' />
-                    Teams
+                    <i className='ri-lock-password-line text-lg' />
+                    Change Password
                   </div>
                 }
-                value='teams'
+                value='change-password'
               />
               <Tab
                 label={
                   <div className='flex items-center gap-1.5'>
-                    <i className='ri-computer-line text-lg' />
-                    Projects
+                    <i className='ri-article-line text-lg' />
+                    My Posts
                   </div>
                 }
-                value='projects'
-              />
-              <Tab
-                label={
-                  <div className='flex items-center gap-1.5'>
-                    <i className='ri-link-m text-lg' />
-                    Connections
-                  </div>
-                }
-                value='connections'
+                value='my-posts'
               />
             </CustomTabList>
 

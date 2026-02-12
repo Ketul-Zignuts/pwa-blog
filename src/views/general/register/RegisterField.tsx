@@ -88,7 +88,7 @@ const RegisterField = () => {
             name="bio"
             label="Bio"
             placeholder="Tell us about yourself and your blog..."
-            type={'tel'}
+            type={'text'}
             fullWidth
             errors={errors}
           />

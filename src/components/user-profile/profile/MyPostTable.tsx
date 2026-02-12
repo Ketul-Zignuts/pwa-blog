@@ -26,7 +26,7 @@ import { useRouter } from 'next/navigation'
 import { PostDataType } from '@/types/postTypes'
 import { myPostListAction } from '@/constants/api/profile'
 
-const ProjectsTables = () => {
+const MyPostTable = () => {
   const { confirm } = useConfirm()
   const queryClient = useQueryClient()
   const router = useRouter()
@@ -37,7 +37,6 @@ const ProjectsTables = () => {
 
   // ✅ TANSTACK PATTERN - Exact same pagination handler
   const handlePaginationChange = useCallback((newModel: GridPaginationModel) => {
-    console.log('Pagination change:', newModel)
 
     if (newModel.pageSize !== pageSize) {
       setPage(0)
@@ -250,4 +249,4 @@ const ProjectsTables = () => {
   )
 }
 
-export default ProjectsTables
+export default MyPostTable

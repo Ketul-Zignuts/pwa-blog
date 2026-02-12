@@ -1,20 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { authSupabase } from '@/lib/supabase-server'
+import { adminSupabase } from '@/lib/supabase-server'
 
 export async function PUT(req: NextRequest) {
   try {
     const uid = req.headers.get('x-user-id')
-    const authHeader = req.headers.get('authorization')
-    const token = authHeader?.replace('Bearer ', '').trim()
 
-    if (!uid || !token) {
+    if (!uid) {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
         { status: 401 }
       )
     }
 
-    const { currentPassword, newPassword, email } = await req.json()
+    const { currentPassword, newPassword } = await req.json()
 
     if (!currentPassword || !newPassword) {
       return NextResponse.json(
@@ -23,15 +21,17 @@ export async function PUT(req: NextRequest) {
       )
     }
 
-    if (newPassword.length < 6) {
-      return NextResponse.json(
-        { success: false, message: 'Password must be at least 6 characters' },
-        { status: 400 }
-      )
+    const { data: userData, error: userError } =
+      await adminSupabase.auth.admin.getUserById(uid)
+
+    if (userError || !userData.user?.email) {
+      throw new Error('User not found')
     }
 
+    const email = userData.user.email
+
     const { error: loginError } =
-      await authSupabase.auth.signInWithPassword({
+      await adminSupabase.auth.signInWithPassword({
         email,
         password: currentPassword
       })
@@ -44,7 +44,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const { error: updateError } =
-      await authSupabase.auth.updateUser({
+      await adminSupabase.auth.admin.updateUserById(uid, {
         password: newPassword
       })
 
@@ -56,7 +56,6 @@ export async function PUT(req: NextRequest) {
       success: true,
       message: 'Password changed successfully'
     })
-
   } catch (error: any) {
     console.error('Change password error:', error)
 

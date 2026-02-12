@@ -15,51 +15,46 @@ import {
   Typography,
   Button,
   Tooltip,
-  IconButton
+  IconButton,
+  Box
 } from '@mui/material'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useConfirm } from '@/hooks/useConfirm'
 import { DataGridTable } from '@/components/common/DataGridTable'
-import { adminPostDeleteAction, adminPostListAction } from '@/constants/api/admin/posts'
+import { adminPostDeleteAction } from '@/constants/api/admin/posts'
 import { useRouter } from 'next/navigation'
 import { PostDataType } from '@/types/postTypes'
-import AppBreadcrumbs from '@/components/common/AppBreadcrumbs'
-import { useAppSelector } from '@/store'
-import { toast } from 'react-toastify'
-import { globalConfig } from '@/configs/globalConfig'
+import { myPostListAction } from '@/constants/api/profile'
+import dayjs from 'dayjs'
 
-const path = [
-  { label: 'Home', href: '/admin/home' },
-  { label: 'Posts' }
-]
-
-const AdminPostView = () => {
+const MyPostTable = () => {
   const { confirm } = useConfirm()
   const queryClient = useQueryClient()
   const router = useRouter()
+  
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
   const [search, setSearch] = useState('')
-  const isRoAdmin = useAppSelector((state) => state?.auth?.user?.isroadmin)
-  
+
+  // ✅ TANSTACK PATTERN - Exact same pagination handler
   const handlePaginationChange = useCallback((newModel: GridPaginationModel) => {
+
     if (newModel.pageSize !== pageSize) {
-      setPage(0)  // Always reset to page 0
+      setPage(0)
       setPageSize(newModel.pageSize)
       return
     }
 
-    // Normal page change
     setPage(newModel.page)
   }, [pageSize])
 
   const { data: postsData, isLoading } = useQuery({
-    queryKey: ['admin-posts', page, pageSize, search],
+    queryKey: ['admin-my-posts', page, pageSize, search],
     queryFn: async () => {
-      const res = await adminPostListAction({
+      const res = await myPostListAction({
         page: page + 1,
         limit: pageSize,
-        search
+        search: search || undefined
       })
       return res
     },
@@ -73,7 +68,7 @@ const AdminPostView = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminPostDeleteAction(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-posts'] })
+      queryClient.invalidateQueries({ queryKey: ['admin-my-posts'] })
       setPage(0)
     }
   })
@@ -85,21 +80,14 @@ const AdminPostView = () => {
       confirmText: 'Delete'
     })
 
-    if (!ok) return
-
-    if (isRoAdmin) {
-      toast.error(globalConfig?.RO_ADMIN_MESSAGE)
-      return
-    }
-
-    deleteMutation.mutate(id)
+    if (ok) deleteMutation.mutate(id)
   }
 
   const columns: GridColDef[] = [
     {
       field: 'index',
       headerName: '#',
-      width: 60,
+      width: 80,
       renderCell: (params: GridRenderCellParams) => {
         const rowIndex = data.findIndex(row => row?.id === params.id)
         const index = page * pageSize + (rowIndex + 1)
@@ -116,80 +104,121 @@ const AdminPostView = () => {
     {
       field: 'title',
       headerName: 'Title',
-      minWidth: 280,
+      minWidth: 270,
       sortable: true,
       filterable: true,
-      renderCell: ({ row }: GridRenderCellParams) => (
-        <Stack direction="row" spacing={2} alignItems="center">
-          <Avatar
-            src={`${process.env.NEXT_PUBLIC_SUPABASE_BUCKET_URL}/post-images/${row.hero_image}`}
-            alt={row.title}
-            variant="rounded"
-            sx={{ width: 50, height: 50 }}
-          />
-          <Typography variant="body2" fontWeight={500} noWrap>
-            {row.title}
-          </Typography>
-        </Stack>
-      ),
-    },
-    {
-      field: 'slug',
-      headerName: 'Slug',
-      sortable: true,
-      filterable: true,
-      minWidth: 200,
+      renderCell: ({ row }: GridRenderCellParams) => {
+        const post = row as PostDataType
+        return (
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ width: '100%' }}>
+            <Avatar
+              src={`${process.env.NEXT_PUBLIC_SUPABASE_BUCKET_URL}/post-images/${post?.hero_image}`}
+              alt={post?.title}
+              variant="rounded"
+              sx={{ width: 40, height: 40, flexShrink: 0 }}
+            />
+            <Typography
+              variant="body2"
+              fontWeight={500}
+              noWrap
+              sx={{
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+                maxWidth: 300,
+              }}
+              title={post?.title}
+            >
+              {post?.title}
+            </Typography>
+          </Stack>
+        )
+      },
     },
     {
       field: 'category',
       headerName: 'Category',
+      minWidth: 270,
       sortable: true,
       filterable: true,
-      minWidth: 200,
-      renderCell: ({ row }) => row?.category?.name || '',
+      renderCell: ({ row }: GridRenderCellParams) => {
+        const category = row?.category
+        return (
+          <Typography variant="body2">
+            {category?.name || '-'}
+          </Typography>
+        )
+      },
     },
     {
-      field: 'author',
-      headerName: 'Author',
-      minWidth: 350,
-      sortable: false,
+      field: 'views',
+      headerName: 'Views',
+      minWidth: 110,
+      sortable: true,
+      filterable: true,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: ({ row }: GridRenderCellParams) => {
-        const user = row?.user
         return (
-          <Stack direction="row" spacing={2} alignItems="center">
-            <Avatar src={user?.photoURL} alt={user?.displayName} sx={{ width: 50, height: 50 }} />
-            <Stack>
-              <Typography variant="body2" fontWeight={500}>
-                {user?.displayName}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {user?.email}
-              </Typography>
-            </Stack>
-          </Stack>
+          <Typography variant="body2">
+            {row?.views ?? 0}
+          </Typography>
+        )
+      },
+    },
+    {
+      field: 'likes',
+      headerName: 'Likes',
+      minWidth: 110,
+      sortable: true,
+      filterable: true,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ row }: GridRenderCellParams) => {
+        return (
+          <Typography variant="body2">
+            {row?.likes ?? 0}
+          </Typography>
+        )
+      },
+    },
+    {
+      field: 'created_at',
+      headerName: 'Created At',
+      minWidth: 250,
+      sortable: true,
+      filterable: true,
+      renderCell: ({ row }: GridRenderCellParams) => {
+        return (
+          <Typography variant="body2">
+            {row?.created_at ? dayjs(row?.created_at).format('DD MMM YYYY hh:mm A') : '-'}
+          </Typography>
         )
       },
     },
     {
       field: 'status',
       headerName: 'Status',
-      minWidth: 160,
+      minWidth: 180,
       sortable: true,
       filterable: true,
-      renderCell: ({ value }: GridRenderCellParams) => (
-        <Chip
-          label={
-            value === 'draft' ? 'Draft' :
-              value === 'published' ? 'Published' : 'Archived'
-          }
-          color={
-            value === 'published' ? 'success' :
-              value === 'draft' ? 'warning' : 'default'
-          }
-          variant="tonal"
-          size="small"
-        />
-      ),
+      renderCell: ({ value }: GridRenderCellParams) => {
+        const status = value as 'draft' | 'published' | 'archived'
+        return (
+          <Chip
+            label={
+              status === 'draft' ? 'Draft' :
+              status === 'published' ? 'Published' : 'Archived'
+            }
+            color={
+              status === 'published' ? 'success' :
+              status === 'draft' ? 'warning' : 'default'
+            }
+            variant="tonal"
+            size="small"
+          />
+        )
+      },
     },
     {
       field: 'actions',
@@ -202,13 +231,13 @@ const AdminPostView = () => {
       disableColumnMenu: true,
       align: 'center',
       headerAlign: 'center',
-      minWidth:120,
+      minWidth: 120,
       getActions: (params: GridRowParams) => [
         <GridActionsCellItem
           key="edit"
           icon={
             <Tooltip title="Edit">
-              <IconButton size="small" color="primary">
+              <IconButton size="small" color="primary" disabled={deleteMutation.isPending}>
                 <i className='ri-edit-line text-[22px]' />
               </IconButton>
             </Tooltip>
@@ -221,7 +250,7 @@ const AdminPostView = () => {
           key="delete"
           icon={
             <Tooltip title="Delete">
-              <IconButton size="small" color="error">
+              <IconButton size="small" color="error" disabled={deleteMutation.isPending}>
                 <i className='ri-delete-bin-line text-[22px]' />
               </IconButton>
             </Tooltip>
@@ -234,11 +263,11 @@ const AdminPostView = () => {
     },
   ]
 
-const handleSearchChange = useCallback((value: string) => {
-  if (value === search) return
-  setPage(0)
-  setSearch(value)
-}, [search])
+  const handleSearchChange = useCallback((value: string) => {
+    if (value === search) return
+    setPage(0)
+    setSearch(value)
+  }, [search])
 
   const addAction = (
     <Button
@@ -253,8 +282,6 @@ const handleSearchChange = useCallback((value: string) => {
   const paginationModel: GridPaginationModel = { page, pageSize }
 
   return (
-    <>
-    <AppBreadcrumbs path={path} />
     <DataGridTable
       columns={columns}
       rows={data}
@@ -265,10 +292,8 @@ const handleSearchChange = useCallback((value: string) => {
       addAction={addAction}
       searchValue={search}
       onSearchChange={handleSearchChange}
-      rowHeight={64}
     />
-    </>
   )
 }
 
-export default AdminPostView
+export default MyPostTable

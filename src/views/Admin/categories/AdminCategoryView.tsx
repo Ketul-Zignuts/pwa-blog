@@ -51,9 +51,7 @@ const AdmincategoryView = () => {
     data: null
   })
 
-  // ✅ TANSTACK PATTERN - Exact same pagination handler as AdminPostView
   const handlePaginationChange = useCallback((newModel: GridPaginationModel) => {
-    console.log('Pagination change:', newModel)
 
     if (newModel.pageSize !== pageSize) {
       setPage(0)
@@ -95,12 +93,15 @@ const AdmincategoryView = () => {
       description: 'This action cannot be undone',
       confirmText: 'Delete'
     })
+
+    if (!ok) return
+
     if (isRoAdmin) {
       toast.error(globalConfig?.RO_ADMIN_MESSAGE)
       return
     }
 
-    if (ok) deleteMutation.mutate(id)
+    deleteMutation.mutate(id)
   }
 
   const handleEdit = (row: CategoryDataType) => {
@@ -142,7 +143,7 @@ const AdmincategoryView = () => {
     {
       field: 'icon',
       headerName: 'Icon',
-      width: 80,
+      width: 100,
       sortable: false,
       filterable: false,
       align: 'center',
@@ -157,16 +158,21 @@ const AdmincategoryView = () => {
     {
       field: 'description',
       headerName: 'Description',
-      minWidth: 300,
+      minWidth: 400,
       sortable: true,
       filterable: true,
     },
     {
       field: 'is_active',
       headerName: 'Status',
-      minWidth: 140,
-      sortable: true,
-      filterable: true,
+      minWidth: 190,
+      sortable: false,
+      filterable: false,
+      editable: false,
+      resizable: false,
+      disableColumnMenu: true,
+      align: 'center',
+      headerAlign: 'center',
       renderCell: ({ value }: GridRenderCellParams) => (
         <Chip
           label={value ? 'Active' : 'Inactive'}
@@ -187,7 +193,7 @@ const AdmincategoryView = () => {
       disableColumnMenu: true,
       align: 'center',
       headerAlign: 'center',
-      minWidth:120,
+      minWidth: 190,
       getActions: (params: GridRowParams) => {
         const row = params.row as CategoryDataType
         return [
