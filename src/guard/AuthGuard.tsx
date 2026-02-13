@@ -28,7 +28,7 @@ const AuthGuard = ({ children, pageType }: AuthGuardProps) => {
     if (authUserLoading) return
 
     const loginPath = pageType === 'admin' ? '/admin/login' : '/login'
-    const homePath = pageType === 'admin' ? '/admin/home' : '/home'
+    const homePath = pageType === 'admin' ? '/admin/home' : '/'
 
     const isPublicRoute = publicPath.some(path =>
       pathname.startsWith(path)

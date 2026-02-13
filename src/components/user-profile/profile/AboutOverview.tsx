@@ -46,7 +46,6 @@ const user = useAppSelector((state)=>state.auth.user)
                 </div>
               </div>
               <div className='flex items-center gap-2'>
-                <i className={'ri-information-line text-textSecondary text-[22px]'} />
                 <div className='flex items-center flex-wrap gap-2'>
                   <Typography className='font-medium'>
                     Bio:

@@ -101,6 +101,7 @@ export const getRequest = async (
 ) => {
   const finalUrl = buildUrl(url, id);
 
+  console.log('query: ', query);
   const res = await api.get(finalUrl, {
     params: query,
     paramsSerializer: {
