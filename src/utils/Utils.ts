@@ -1,3 +1,5 @@
+import { ChipProps } from "@mui/material";
+
 export function stringToColor(str: string) {
   let hash = 0;
   for (let i = 0; i < str.length; i += 1) {
@@ -10,4 +12,17 @@ export function stringToColor(str: string) {
   ];
   
   return colors[Math.abs(hash) % colors.length];
+}
+
+export const getRandomMuiColor = (): ChipProps['color'] => {
+  const colors: ChipProps['color'][] = [
+    'primary',
+    'secondary',
+    'success',
+    'error',
+    'info',
+    'warning',
+  ]
+
+  return colors[Math.floor(Math.random() * colors.length)]
 }

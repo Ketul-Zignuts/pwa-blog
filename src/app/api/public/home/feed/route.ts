@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
 
     const limit = 10
     const from = (page - 1) * limit
-    const to = from + limit // fetch 1 extra for hasMore
+    const to = from + limit
 
     let query = adminSupabase
       .from('posts')
@@ -20,11 +20,13 @@ export async function GET(req: NextRequest) {
         title,
         slug,
         excerpt,
+        content,
         hero_image,
         published_at,
         views,
         likes,
         tags,
+        comments_count,
         category:categories (
           id,
           name,

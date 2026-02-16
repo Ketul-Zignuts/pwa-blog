@@ -93,7 +93,7 @@ const Login = ({ mode }: { mode: Mode }) => {
       )
 
       toast.success('Login successful!')
-      router.replace('/admin/home')
+      router.replace('/home')
     },
     onError: (err: any) => {
       dispatch(setAuthLoading(false))

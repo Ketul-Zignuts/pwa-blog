@@ -8,7 +8,6 @@ import IconButton from '@mui/material/IconButton'
 import InputBase from '@mui/material/InputBase'
 import Badge from '@mui/material/Badge'
 import MenuItem from '@mui/material/MenuItem'
-import Menu from '@mui/material/Menu'
 import Drawer from '@mui/material/Drawer'
 import List from '@mui/material/List'
 import ListItem from '@mui/material/ListItem'
@@ -213,21 +212,27 @@ export default function HomeNavbar() {
                             </IconButton>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', ml: 10 }}>
-                            <Badge
-                                ref={anchorRef}
-                                overlap='circular'
-                                badgeContent={<BadgeContentSpan onClick={handleDropdownOpen} />}
-                                anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-                                className='mis-2'
-                            >
-                                <Avatar
+                            {user ? (
+                                <Badge
                                     ref={anchorRef}
-                                    alt={user?.displayName}
-                                    src={user?.photoURL || '/images/avatars/1.png'}
-                                    onClick={handleDropdownOpen}
-                                    className='cursor-pointer bs-[38px] is-[38px]'
-                                />
-                            </Badge>
+                                    overlap='circular'
+                                    badgeContent={<BadgeContentSpan onClick={handleDropdownOpen} />}
+                                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                                    className='mis-2'
+                                >
+                                    <Avatar
+                                        ref={anchorRef}
+                                        alt={user?.displayName}
+                                        src={user?.photoURL || '/images/avatars/1.png'}
+                                        onClick={handleDropdownOpen}
+                                        className='cursor-pointer bs-[38px] is-[38px]'
+                                    />
+                                </Badge>
+                            ) : (
+                                <IconButton onClick={() => router.push('/login')}>
+                                    <AccountCircle className='cursor-pointer bs-[34px] is-[34px]' />
+                                </IconButton>
+                            )}
                             <Popper
                                 open={open}
                                 transition

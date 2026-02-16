@@ -1,20 +1,7 @@
 'use client'
 
-import HomeFeaturedSkeleton from '@/components/skeleton/HomeFeaturedSkeleton'
 import { getTrendingPostAction } from '@/constants/api/general/home/home'
-import {
-  Box,
-  Typography,
-  Avatar,
-  Card,
-  CardContent,
-  CardMedia,
-  CardActionArea,
-  Chip,
-  IconButton,
-  Stack,
-  Link,
-} from '@mui/material'
+import { Box, Typography, Card, CardContent, CardMedia, CardActionArea, IconButton, Stack } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import React from 'react'
 import NextLink from 'next/link'
@@ -22,6 +9,7 @@ import dayjs from 'dayjs'
 import TrendingUpIcon from '@mui/icons-material/TrendingUp'
 import VisibilityIcon from '@mui/icons-material/Visibility'
 import FavoriteIcon from '@mui/icons-material/Favorite'
+import HomeTrendingSkeleton from '@/components/skeleton/HomeTrendingSkeleton'
 
 const HomeTrending = () => {
   const { data: trendingPost, isLoading } = useQuery({
@@ -30,7 +18,7 @@ const HomeTrending = () => {
   })
 
   if (isLoading) {
-    return <HomeFeaturedSkeleton />
+    return <HomeTrendingSkeleton />
   }
 
   if (!trendingPost?.data || trendingPost.data.length === 0) return null
@@ -51,16 +39,9 @@ const HomeTrending = () => {
               display: 'flex',
               height: 140,
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              '&:hover': {
-                transform: 'translateY(-4px)',
-                boxShadow: (theme) => theme.shadows[8],
-                '& .MuiCardMedia-root': {
-                  transform: 'scale(1.05)',
-                },
-              },
               position: 'relative',
               overflow: 'hidden',
-              width:'100%'
+              width: '100%'
             }}
             variant='outlined'
           >
@@ -96,7 +77,7 @@ const HomeTrending = () => {
                   sx={{
                     fontWeight: 700,
                     lineHeight: 1.2,
-                    mb:2,
+                    mb: 2,
                     overflow: 'hidden',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,

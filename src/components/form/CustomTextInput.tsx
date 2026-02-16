@@ -1,7 +1,7 @@
 import React from 'react'
 
 //* MUI Imports
-import { TextField, Typography, keyframes, InputAdornment, TextFieldProps } from '@mui/material'
+import { TextField, Typography, keyframes, InputAdornment, TextFieldProps, Tooltip } from '@mui/material'
 import IconButton from '@mui/material/IconButton'
 
 //* NPM Imports
@@ -35,9 +35,10 @@ interface FormInputProps {
   icon?: React.ReactNode
   onIconPress?: () => void
   iconPosition?: 'start' | 'end'
-  iconButtonDisable?:boolean
-  fieldArray?:boolean
+  iconButtonDisable?: boolean
+  fieldArray?: boolean
   extraTextFieldProps?: TextFieldProps
+  iconTooltipTitle?: string
 }
 
 const glowAnimation = keyframes`
@@ -82,7 +83,8 @@ function CustomTextInput({
   onIconPress,
   iconButtonDisable = false,
   fieldArray,
-  extraTextFieldProps = {}
+  extraTextFieldProps = {},
+  iconTooltipTitle = ''
 }: FormInputProps) {
   const isRequired = requiredFlag || false
 
@@ -152,16 +154,23 @@ function CustomTextInput({
                 ...extraProps,
                 endAdornment: icon ? (
                   <InputAdornment position="end">
-                    <IconButton
-                      aria-label="toggle password visibility"
-                      onClick={() => onIconPress && onIconPress()}
-                      onMouseDown={(e) => e.preventDefault()}
-                      edge="end"
-                      size="small"
-                      disabled={iconButtonDisable}
+                    <Tooltip
+                      title={iconTooltipTitle}
+                      disableHoverListener={!iconTooltipTitle}
+                      disableFocusListener={!iconTooltipTitle}
+                      disableTouchListener={!iconTooltipTitle}
                     >
-                      {icon}
-                    </IconButton>
+                      <IconButton
+                        aria-label="perform icon action"
+                        onClick={() => onIconPress && onIconPress()}
+                        onMouseDown={(e) => e.preventDefault()}
+                        edge="end"
+                        size="small"
+                        disabled={iconButtonDisable}
+                      >
+                        {icon}
+                      </IconButton>
+                    </Tooltip>
                   </InputAdornment>
                 ) : undefined
               }}

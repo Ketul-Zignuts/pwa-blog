@@ -45,7 +45,7 @@ const HomeFeatured = () => {
         fontWeight={600}
         sx={{ mt: 1, cursor: 'pointer' }}
         component={NextLink}
-        href={`/post/${post.slug}`}
+        href={`/blog/${post?.slug}`}
       >
         {post?.title}
       </Typography>
@@ -80,7 +80,7 @@ const HomeFeatured = () => {
       </Box>
       <Link
         component={NextLink}
-        href={`/post/${post.slug}`}
+        href={`/blog/${post.slug}`}
         sx={{ mt: 1, fontWeight: 500 }}
       >
         Continue Reading

@@ -26,7 +26,7 @@ const NotFound = ({ mode }: { mode: Mode }) => {
   const redirectTo = useMemo(() => {
     if (authData?.isAdminLoggedIn && authData?.user) return '/admin/home'
     if (authData?.user) return '/home'
-    return '/login'
+    return '/home'
   }, [authData?.isAdminLoggedIn, authData?.user])
 
   // Hooks

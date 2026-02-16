@@ -1,39 +1,67 @@
-import { Skeleton, Box } from '@mui/material'
+import { Skeleton, Box, Stack, Card } from '@mui/material'
 import React from 'react'
+
+const TrendingCardSkeleton = () => {
+  return (
+    <Card
+      variant="outlined"
+      sx={{
+        display: 'flex',
+        height: 140,
+        overflow: 'hidden',
+        width: '100%'
+      }}
+    >
+      {/* Image Skeleton */}
+      <Skeleton
+        variant="rectangular"
+        width={140}
+        height={140}
+        animation="wave"
+      />
+
+      {/* Content */}
+      <Box sx={{ flex: 1, p: 2 }}>
+        {/* Title */}
+        <Skeleton variant="text" width="90%" height={28} />
+        <Skeleton variant="text" width="75%" height={28} sx={{ mb: 1 }} />
+
+        {/* Excerpt */}
+        <Skeleton variant="text" width="100%" height={20} />
+        <Skeleton variant="text" width="85%" height={20} sx={{ mb: 2 }} />
+
+        {/* Bottom Row */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <Skeleton variant="circular" width={18} height={18} />
+          <Skeleton variant="text" width={40} />
+
+          <Skeleton variant="circular" width={18} height={18} />
+          <Skeleton variant="text" width={30} />
+
+          <Box sx={{ flex: 1 }} />
+
+          <Skeleton variant="text" width={60} />
+        </Box>
+      </Box>
+    </Card>
+  )
+}
 
 const HomeTrendingSkeleton = () => {
   return (
-    <Box sx={{ width: '100%' }}>
-      {/* Hero Image */}
-      <Skeleton
-        variant="rectangular"
-        width="100%"
-        height={380}
-        sx={{ borderRadius: 2 }}
-      />
-
-      {/* Content Section */}
-      <Box sx={{ mt: 3 }}>
-        {/* Date */}
-        <Skeleton variant="text" width={120} height={20} />
-
-        {/* Title */}
-        <Skeleton variant="text" width="90%" height={40} sx={{ mt: 1 }} />
-        <Skeleton variant="text" width="75%" height={40} />
-
-        {/* Excerpt */}
-        <Skeleton variant="text" width="100%" height={24} sx={{ mt: 2 }} />
-        <Skeleton variant="text" width="95%" height={24} />
-        <Skeleton variant="text" width="85%" height={24} />
-
-        {/* Continue Reading */}
-        <Skeleton
-          variant="text"
-          width={140}
-          height={30}
-          sx={{ mt: 2 }}
-        />
+    <Box>
+      {/* Header */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, pt: 2, pb: 4 }}>
+        <Skeleton variant="circular" width={32} height={32} />
+        <Skeleton variant="text" width={200} height={40} />
       </Box>
+
+      {/* 4 Trending Cards */}
+      <Stack spacing={4}>
+        {Array.from({ length: 4 }).map((_, index) => (
+          <TrendingCardSkeleton key={index} />
+        ))}
+      </Stack>
     </Box>
   )
 }
