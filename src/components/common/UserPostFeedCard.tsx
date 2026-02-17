@@ -16,19 +16,74 @@ import {
 } from '@mui/material'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined'
+import FavoriteOutlinedIcon from '@mui/icons-material/FavoriteOutlined'
 import ChatBubbleOutlineOutlinedIcon from '@mui/icons-material/ChatBubbleOutlineOutlined'
 import dayjs from 'dayjs'
 import React, { useState } from 'react'
 import { getRandomMuiColor } from '@/utils/Utils'
 import TextEditorContentCropper from './TextEditorContentCropper'
 import UserPostItemComment from './UserPostItemComment'
+import { toast } from 'react-toastify'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { likePostAction } from '@/constants/api/general/general'
+import { useAppSelector } from '@/store'
 
 type PostFeedProps = {
   item: PostItemDataProps
 }
 
 const UserPostFeedCard = ({ item }: PostFeedProps) => {
-  const [showComments, setShowComments] = useState(false)
+  const user = useAppSelector((state)=>state.auth.user);
+  const [showComments, setShowComments] = useState<string | null>(null)
+  const queryClient = useQueryClient();
+  const [isLiked, setIsLiked] = useState(false)
+  const [optimisticLikes, setOptimisticLikes] = useState(item.likes)
+
+  const { mutate: toggleLike, isPending } = useMutation({
+    mutationFn: (likeData: { post_id: string }) => likePostAction(likeData),
+    onMutate: async (newLikeData) => {
+      // Optimistic update
+      await queryClient.cancelQueries({ queryKey: ['mainFeed'] })
+      const previousPosts = queryClient.getQueryData(['mainFeed'])
+      
+      queryClient.setQueryData(['mainFeed'], (old: any[] | undefined) => 
+        old?.map(post => 
+          post.id === newLikeData.post_id 
+            ? { ...post, likes: isLiked || item?.isLiked ? post.likes - 1 : post.likes + 1 }
+            : post
+        )
+      )
+
+      return { previousPosts }
+    },
+    onSuccess: (response: any) => {
+      if (response.action === 'liked') {
+        setIsLiked(true)
+      } else {
+        setIsLiked(false)
+      }
+    },
+    onError: (err: any, newLikeData, context: any) => {
+      // Rollback optimistic update
+      queryClient.setQueryData(['mainFeed'], context?.previousPosts)
+      const message = err?.response?.data?.message || 'Like action failed!'
+      toast.error(message)
+      setOptimisticLikes(item.likes)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['mainFeed'] })
+    }
+  })
+
+  const handleLikeToggle = () => {
+    toggleLike({
+      post_id: item.id
+    })
+    
+    // Immediate optimistic UI update
+    setOptimisticLikes(prev => isLiked || item?.isLiked ? prev - 1 : prev + 1)
+    setIsLiked(prev => !prev)
+  }
 
   return (
     <Card
@@ -136,7 +191,7 @@ const UserPostFeedCard = ({ item }: PostFeedProps) => {
               </Typography>
             </Box>
           </Stack>
-          
+
           <Stack direction="row" spacing={2} alignItems="center">
             <Stack direction="row" spacing={0.5} alignItems="center">
               <VisibilityOutlinedIcon fontSize="small" />
@@ -144,14 +199,34 @@ const UserPostFeedCard = ({ item }: PostFeedProps) => {
             </Stack>
 
             <Stack direction="row" spacing={0.5} alignItems="center">
-              <FavoriteBorderOutlinedIcon fontSize="small" />
-              <Typography variant="caption">{item.likes}</Typography>
+              <IconButton
+                size="small"
+                onClick={handleLikeToggle}
+                disabled={isPending || !user}
+                sx={{ 
+                  color: isLiked || item?.isLiked ? 'error.main' : 'inherit',
+                  '&:hover': {
+                    backgroundColor: isLiked || item?.isLiked ? 'error.100' : 'action.hover'
+                  }
+                }}
+              >
+                {isLiked || item?.isLiked ? (
+                  <FavoriteOutlinedIcon fontSize="small" />
+                ) : (
+                  <FavoriteBorderOutlinedIcon fontSize="small" />
+                )}
+              </IconButton>
+              <Typography variant="caption">{optimisticLikes}</Typography>
             </Stack>
 
             <Stack direction="row" spacing={0.5} alignItems="center">
               <IconButton
                 size="small"
-                onClick={() => setShowComments((prev) => !prev)}
+                onClick={() => {
+                  setShowComments((prev) =>
+                    prev === item.id ? null : item.id
+                  )
+                }}
               >
                 <ChatBubbleOutlineOutlinedIcon fontSize="small" />
               </IconButton>
@@ -162,7 +237,12 @@ const UserPostFeedCard = ({ item }: PostFeedProps) => {
           </Stack>
         </Stack>
       </CardContent>
-      <UserPostItemComment showComments={showComments} postId={item?.id} />
+      {showComments === item.id && (
+        <UserPostItemComment
+          showComments={showComments}
+          postId={item.id}
+        />
+      )}
     </Card>
   )
 }

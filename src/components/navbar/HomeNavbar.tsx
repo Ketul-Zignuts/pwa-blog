@@ -239,7 +239,7 @@ export default function HomeNavbar() {
                                 disablePortal
                                 placement='bottom-end'
                                 anchorEl={anchorRef.current}
-                                className='min-is-[240px] !mbs-4 z-[1]'
+                                className='z-[9999] min-is-[240px] !mbs-4 z-[1]'
                             >
                                 {({ TransitionProps, placement }) => (
                                     <Fade

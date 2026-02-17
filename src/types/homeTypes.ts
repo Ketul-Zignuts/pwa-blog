@@ -10,6 +10,7 @@ export type PostItemDataProps = {
   tags: string[]
   content?:string
   comments_count?:number
+  isLiked?:boolean
   category: {
     id: string
     name: string

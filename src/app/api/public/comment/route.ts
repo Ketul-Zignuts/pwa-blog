@@ -1,15 +1,43 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { adminSupabase } from '@/lib/supabase-server'
 
-
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
 
     const post_id = searchParams.get('post_id')
+    const parent_id = searchParams.get('parent_id')
+
     const page = Number(searchParams.get('page') || 1)
     const limit = Number(searchParams.get('limit') || 10)
+    
+    if (parent_id) {
+      const { data, error } = await adminSupabase
+        .from('comments')
+        .select(`
+          *,
+          user:users (
+            uid,
+            displayName,
+            photoURL
+          )
+        `)
+        .eq('parent_id', parent_id)
+        .order('created_at', { ascending: true })
 
+      if (error) {
+        return NextResponse.json(
+          { success: false, message: error.message },
+          { status: 500 }
+        )
+      }
+
+      return NextResponse.json({
+        success: true,
+        data
+      })
+    }
+    
     if (!post_id) {
       return NextResponse.json(
         { success: false, message: 'post_id is required' },

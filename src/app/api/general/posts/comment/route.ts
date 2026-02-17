@@ -12,13 +12,39 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { post_id, content, parent_id } = await req.json()
+    const body = await req.json()
+
+    const post_id = body?.post_id?.trim()
+    const content = body?.content?.trim()
+    const parent_id = body?.parent_id ?? null
 
     if (!post_id || !content) {
       return NextResponse.json(
-        { success: false, message: 'Missing fields' },
+        { success: false, message: 'post_id and content are required' },
         { status: 400 }
       )
+    }
+
+    if (content.length > 1000) {
+      return NextResponse.json(
+        { success: false, message: 'Comment is too long (max 1000 characters)' },
+        { status: 400 }
+      )
+    }
+
+    if (parent_id) {
+      const { data: parentComment } = await adminSupabase
+        .from('comments')
+        .select('id')
+        .eq('id', parent_id)
+        .single()
+
+      if (!parentComment) {
+        return NextResponse.json(
+          { success: false, message: 'Invalid parent comment' },
+          { status: 400 }
+        )
+      }
     }
 
     const { data, error } = await adminSupabase
@@ -28,7 +54,7 @@ export async function POST(req: NextRequest) {
           post_id,
           user_uid: uid,
           content,
-          parent_id: parent_id ?? null
+          parent_id
         }
       ])
       .select(`
@@ -50,71 +76,11 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(
       { success: true, data },
-      { status: 200 }
+      { status: 201 }
     )
 
-  } catch (error: any) {
-    console.error('Comment error:', error)
-    return NextResponse.json(
-      { success: false, message: 'Something went wrong' },
-      { status: 500 }
-    )
-  }
-}
-
-export async function GET(req: NextRequest) {
-  try {
-    const { searchParams } = new URL(req.url)
-
-    const post_id = searchParams.get('post_id')
-    const page = Number(searchParams.get('page') || 1)
-    const limit = Number(searchParams.get('limit') || 10)
-
-    if (!post_id) {
-      return NextResponse.json(
-        { success: false, message: 'post_id is required' },
-        { status: 400 }
-      )
-    }
-
-    const from = (page - 1) * limit
-    const to = from + limit - 1
-
-    const { data, error, count } = await adminSupabase
-      .from('comments')
-      .select(`
-        *,
-        user:users (
-          uid,
-          displayName,
-          photoURL
-        )
-      `, { count: 'exact' })
-      .eq('post_id', post_id)
-      .is('parent_id', null)
-      .order('created_at', { ascending: false })
-      .range(from, to)
-
-    if (error) {
-      return NextResponse.json(
-        { success: false, message: error.message },
-        { status: 500 }
-      )
-    }
-
-    return NextResponse.json({
-      success: true,
-      data,
-      pagination: {
-        page,
-        limit,
-        total: count,
-        hasMore: to + 1 < (count || 0)
-      }
-    })
-
-  } catch (error: any) {
-    console.error('Fetch comments error:', error)
+  } catch (error) {
+    console.error('Comment POST error:', error)
     return NextResponse.json(
       { success: false, message: 'Something went wrong' },
       { status: 500 }
