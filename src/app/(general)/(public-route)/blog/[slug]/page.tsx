@@ -1,6 +1,5 @@
 import { Metadata } from 'next'
 import BlogDetail from '@/views/general/blog/BlogDetail'
-import api from '@/lib/api'
 
 type Props = {
   params: { slug: string }

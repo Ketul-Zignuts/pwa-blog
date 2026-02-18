@@ -5,5 +5,10 @@ export const commentEditAction = (formData: any) => putRequest('/general/posts/c
 export const commentDeleteAction = (id: string) => deleteRequest('/general/posts/comment', id);
 export const commentGetAction = (params:any) => getRequest('/public/comment',params);
 export const postDetailGetAction = (slug: any) => getRequest('/public/blog',undefined, slug);
-
+export const postDetailMorePostGetAction = (params: any) => getRequest('/public/related',params);
 export const likePostAction = (likeData: any) => postRequest('/general/posts/like', likeData);
+
+export const rateReviewGetAction = (params:any) => getRequest('/public/blog/review',params);
+export const rateReviewDeleteAction = (params:any) => deleteRequest('/general/review',params);
+export const rateReviewUpdateAction = (formData:any) => putRequest('/general/review',formData);
+export const rateReviewCreateAction = (formData:any) => postRequest('/general/review',formData);

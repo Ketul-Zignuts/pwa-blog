@@ -85,7 +85,11 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     }
 }))
 
-export default function HomeNavbar() {
+type HomeNavbarProps ={
+    showBoxShadow?:boolean
+}
+
+export default function HomeNavbar({showBoxShadow = false} : HomeNavbarProps) {
     const router = useRouter()
     const dispatch = useAppDispatch();
     const { settings } = useSettings()
@@ -150,7 +154,7 @@ export default function HomeNavbar() {
                     color: isLightMode
                         ? theme.palette.text.primary
                         : 'inherit',
-                    boxShadow: isLightMode
+                    boxShadow: isLightMode || showBoxShadow
                         ? `0px 2px 6px ${theme.palette.primary.main}33`
                         : 'none'
                 })}
