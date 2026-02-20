@@ -7,6 +7,7 @@ import HomeFeed from '@/views/general/home/HomeFeed'
 import HomeTrending from '@/views/general/home/HomeTrending'
 import CategorySelection from '@/components/common/CategorySelection'
 import { useSettings } from '@/@core/hooks/useSettings'
+import InstallBlogButton from '@/components/common/InstallBlogButton'
 
 const HomeView = () => {
   const { settings } = useSettings();
@@ -89,6 +90,7 @@ const HomeView = () => {
           <HomeTrending />
         </Grid>
       </Grid>
+      <InstallBlogButton />
     </Box>
   )
 }

@@ -205,9 +205,7 @@ export default function HomeNavbar({showBoxShadow = false} : HomeNavbarProps) {
                     <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Button color="inherit" onClick={redirectToHome}>Home</Button>
-                            <Button color="inherit">Categories</Button>
-                            <Button color="inherit">Trending</Button>
-                            <Button color="inherit">About</Button>
+                            <Button color="inherit">Filter</Button>
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <IconButton size='small' color='inherit'>
