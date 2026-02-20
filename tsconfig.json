@@ -5,7 +5,8 @@
     "lib": [
       "DOM",
       "DOM.Iterable",
-      "ESNext"
+      "ESNext",
+      "webworker"
     ],
     "allowJs": true,
     "skipLibCheck": true,
@@ -51,6 +52,7 @@
       ]
     }
   },
+  "types": ["@serwist/next/typings"],
   "include": [
     "next.config.mjs",
     "tailwind.config.ts",
@@ -60,6 +62,8 @@
     ".next/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "public/sw.js",
+    "app/sw.ts"
   ]
 }

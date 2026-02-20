@@ -2,7 +2,6 @@
 import type { Metadata } from 'next'
 
 // Server Action Imports
-import { getServerMode } from '@core/utils/serverHelpers'
 import Register from '@/views/general/register/Register'
 
 export const metadata: Metadata = {
@@ -11,10 +10,8 @@ export const metadata: Metadata = {
 }
 
 const LoginPage = () => {
-  // Vars
-  const mode = getServerMode()
 
-  return <Register mode={mode} />
+  return <Register />
 }
 
 export default LoginPage

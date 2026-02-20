@@ -55,7 +55,7 @@ const defaultValues: AddUpdatePostFormData = {
 }
 
 type AdminPostFormTypeProps = {
-  data: PostDetailDataType
+  data?: PostDetailDataType
   fromEdit?: boolean
 }
 

@@ -179,7 +179,8 @@ const UserPostFeedCard = ({ item }: PostFeedProps) => {
         >
           <Stack direction="row" spacing={1} alignItems="center">
             <Avatar
-              src={item.user.photoURL ?? ''}
+              alt={item.user?.displayName ?? ''}
+              src={item.user?.photoURL ?? ''}
               sx={{ width: 30, height: 30 }}
             />
             <Box>

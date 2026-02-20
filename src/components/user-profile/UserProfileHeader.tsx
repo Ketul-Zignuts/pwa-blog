@@ -64,7 +64,7 @@ const UserProfileHeader = () => {
             width={120}
             src={user?.photoURL}
             className='rounded'
-            alt='Profile'
+            alt={user?.displayName}
           />
 
           {/* 🔥 Edit Icon */}
