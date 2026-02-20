@@ -1,11 +1,13 @@
 'use client'
 
 import React from 'react'
-import { BlogDetailProps } from '@/types/blogTypes'
+import { BlogDetailProps, BlogReviewDataProps } from '@/types/blogTypes'
 import { Box, Button, CircularProgress } from '@mui/material'
 import BlogReviewForm from '@/components/blog-detail/BlogReviewForm'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { rateReviewGetAction } from '@/constants/api/general/general'
+import BlogReviewCardItem from '@/components/blog-detail/BlogReviewCardItem'
+import NoReviewsIllustration from '@/components/blog-detail/NoReviewsIllustration'
 
 type BlogMorePostProps = {
   blog: BlogDetailProps
@@ -36,11 +38,20 @@ const BlogReview = ({ blog }: BlogMorePostProps) => {
     initialPageParam: 1
   })
 
-  const reviewData = data?.pages?.flatMap((page: any) => page?.data || [])
+  const reviewData:BlogReviewDataProps[] | undefined = data?.pages?.flatMap((page: any) => page?.data || [])
 
   return (
     <Box className='space-y-4'>
       <BlogReviewForm blog={blog} />
+      {Array.isArray(reviewData) && reviewData?.length > 0 ? (
+        reviewData?.map((item:BlogReviewDataProps) => {
+          return (
+            <BlogReviewCardItem review={item} />
+          )
+        })
+      ) : (
+        <NoReviewsIllustration />
+      )}
       {hasNextPage && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 1 }}>
             <Button

@@ -3,52 +3,64 @@ import Rating from '@mui/material/Rating'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { useForm, Controller } from 'react-hook-form'
 import CustomTextInput from '../form/CustomTextInput'
-import { Button, Box, Card, CardContent, CardActions } from '@mui/material'
+import { Button, Box, Card, CardContent, CardActions, CircularProgress } from '@mui/material'
 import { blogRateReviewSchema } from '@/constants/schema/general/blogDetailSchema'
 import { BlogDetailProps } from '@/types/blogTypes'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { rateReviewCreateAction } from '@/constants/api/general/general'
+import { toast } from 'react-toastify'
 
 type FormValues = {
-    post_id:string
     rating: number
     review: string
 }
 
 type BlogReviewFormProps = {
-  blog: BlogDetailProps
+    blog: BlogDetailProps
 }
 
 const BlogReviewForm = ({ blog }: BlogReviewFormProps) => {
+    const queryClient = useQueryClient();
     const post_id = blog?.id;
 
     const {
         control,
         handleSubmit,
-        setValue,
+        reset,
         formState: { errors }
     } = useForm<FormValues>({
         resolver: yupResolver(blogRateReviewSchema),
         mode: 'all',
         defaultValues: {
-            post_id:'',
             rating: 1,
             review: ''
         }
     })
 
-    const onSubmit = (data: FormValues) => {
-        console.log('Form submitted:', data)
-        // send data to API
-    }
+    const { mutate, isPending } = useMutation({
+        mutationFn: (data: any) => {
+            const apiCall = rateReviewCreateAction;
+            return apiCall({ ...data, post_id });
+        },
+        onSuccess: () => {
+            toast.success('Review submitted successfully!');
+        },
+        onError: (err: any) => {
+            const message = err?.response?.data?.message || 'Something went wrong!';
+            toast.error(message);
+        },
+        onSettled: () => {
+            reset()
+            queryClient.invalidateQueries({ queryKey: ['blog-reviews', blog?.id] });
+        }
+    });
 
-    useEffect(() => {
-      if(post_id){
-        setValue('post_id',post_id)
-      }
-    }, [post_id])
-    
+    const onSubmit = async (data: any) => {
+        await mutate(data);
+    };
 
     return (
-        <Card>
+        <Card sx={{ boxShadow: 0, borderRadius: 2 }}>
             <Box component='form' onSubmit={handleSubmit(onSubmit)}>
                 <CardContent className='space-y-4'>
                     <Controller
@@ -59,6 +71,9 @@ const BlogReviewForm = ({ blog }: BlogReviewFormProps) => {
                                 {...field}
                                 precision={0.5}
                                 onChange={(_, value) => field.onChange(value)}
+                                sx={{
+                                    color: 'primary.main'
+                                }}
                             />
                         )}
                     />
@@ -84,7 +99,7 @@ const BlogReviewForm = ({ blog }: BlogReviewFormProps) => {
                 </CardContent>
 
                 <CardActions>
-                    <Button type='submit' variant='contained' color='primary'>
+                    <Button type='submit' variant='contained' color='primary' disabled={isPending} startIcon={isPending ? <CircularProgress size={20} color='warning' /> : null}>
                         Submit Review
                     </Button>
                 </CardActions>

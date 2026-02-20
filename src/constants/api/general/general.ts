@@ -9,6 +9,6 @@ export const postDetailMorePostGetAction = (params: any) => getRequest('/public/
 export const likePostAction = (likeData: any) => postRequest('/general/posts/like', likeData);
 
 export const rateReviewGetAction = (params:any) => getRequest('/public/blog/review',params);
-export const rateReviewDeleteAction = (params:any) => deleteRequest('/general/review',params);
+export const rateReviewDeleteAction = (id:string) => deleteRequest(`/general/review?id=${id}`);
 export const rateReviewUpdateAction = (formData:any) => putRequest('/general/review',formData);
 export const rateReviewCreateAction = (formData:any) => postRequest('/general/review',formData);

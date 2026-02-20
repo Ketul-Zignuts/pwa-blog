@@ -37,7 +37,7 @@ const UserPostFeedCard = ({ item }: PostFeedProps) => {
   const [showComments, setShowComments] = useState<string | null>(null)
   const queryClient = useQueryClient();
   const [isLiked, setIsLiked] = useState(false)
-  const [optimisticLikes, setOptimisticLikes] = useState(item.likes)
+  const [optimisticLikes, setOptimisticLikes] = useState(item?.likes)
 
   const { mutate: toggleLike, isPending } = useMutation({
     mutationFn: (likeData: { post_id: string }) => likePostAction(likeData),

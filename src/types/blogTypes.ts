@@ -43,3 +43,17 @@ export interface BlogDetailProps {
     photoURL: string
   }
 }
+
+export interface BlogReviewDataProps {
+  created_at: string
+  id: string
+  post_id: string
+  rating: number
+  review: string
+  updated_at: string
+  user_uid: string
+  users: {
+    displayName: string
+    photoURL: string
+  }
+}
