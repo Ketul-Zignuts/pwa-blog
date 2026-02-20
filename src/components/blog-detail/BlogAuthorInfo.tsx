@@ -65,7 +65,7 @@ const BlogAuthorInfo = ({ blog }: BlogAuthorInfoProps) => {
                 <Button
                     variant="contained"
                     size="small"
-                    color='primary'
+                    color='info'
                 >
                     Follow
                 </Button>

@@ -9,6 +9,8 @@ import { BlogDetailProps } from '@/types/blogTypes'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { rateReviewCreateAction } from '@/constants/api/general/general'
 import { toast } from 'react-toastify'
+import { useRouter } from 'next/navigation'
+import { useAppSelector } from '@/store'
 
 type FormValues = {
     rating: number
@@ -20,8 +22,10 @@ type BlogReviewFormProps = {
 }
 
 const BlogReviewForm = ({ blog }: BlogReviewFormProps) => {
-    const queryClient = useQueryClient();
     const post_id = blog?.id;
+    const router = useRouter();
+    const queryClient = useQueryClient();
+    const user = useAppSelector((state)=>state.auth.user);
 
     const {
         control,
@@ -56,6 +60,10 @@ const BlogReviewForm = ({ blog }: BlogReviewFormProps) => {
     });
 
     const onSubmit = async (data: any) => {
+        if(!user) {
+            toast.info('Please log in to rate and review this post.')
+            return router.push('/login')
+        }
         await mutate(data);
     };
 

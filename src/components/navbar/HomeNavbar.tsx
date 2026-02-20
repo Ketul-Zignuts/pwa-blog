@@ -138,6 +138,10 @@ export default function HomeNavbar({showBoxShadow = false} : HomeNavbarProps) {
     })
 
 
+    const redirectToHome = () => {
+        router.push('/home')
+    }
+
     const handleUserLogout = async () => {
         await logout()
     }
@@ -172,12 +176,15 @@ export default function HomeNavbar({showBoxShadow = false} : HomeNavbarProps) {
                         <MenuIcon />
                     </IconButton>
 
-                    <BlogLogo className={'w-12 h-12'} />
+                    <Box sx={{ cursor:'pointer' }} onClick={redirectToHome}>
+                        <BlogLogo className={'w-12 h-12'} />
+                    </Box>
                     <Typography
                         variant='h6'
                         noWrap
                         component='div'
-                        sx={{ display: { xs: 'none', sm: 'block' } }}
+                        sx={{ display: { xs: 'none', sm: 'block' }, cursor:'pointer' }}
+                        onClick={redirectToHome}
                     >
                         {themeConfig.templateName}
                     </Typography>
@@ -197,7 +204,7 @@ export default function HomeNavbar({showBoxShadow = false} : HomeNavbarProps) {
                     {/* Desktop Icons Only */}
                     <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Button color="inherit">Home</Button>
+                            <Button color="inherit" onClick={redirectToHome}>Home</Button>
                             <Button color="inherit">Categories</Button>
                             <Button color="inherit">Trending</Button>
                             <Button color="inherit">About</Button>

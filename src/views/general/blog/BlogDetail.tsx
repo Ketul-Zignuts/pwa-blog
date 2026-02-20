@@ -1,7 +1,7 @@
 'use client'
 import HomeNavbar from '@/components/navbar/HomeNavbar'
 import { postDetailGetAction } from '@/constants/api/general/general'
-import { Grid, Box, Container } from '@mui/material'
+import { Grid, Box, Container, Button } from '@mui/material'
 import { useQuery } from '@tanstack/react-query'
 import React from 'react'
 import BlogHeroImage from '@/components/blog-detail/BlogHeroImage'
@@ -12,6 +12,7 @@ import BlogContent from '@/components/blog-detail/BlogContent'
 import BlogMorePost from '@/components/blog-detail/BlogMorePost'
 import BlogDetailPageSkeleton from '@/components/skeleton/BloDetailPageSkeleton'
 import BlogReview from '@/components/blog-detail/BlogReview'
+import ScrollToTop from '@/@core/components/scroll-to-top'
 
 type Props = {
   slug: string
@@ -45,6 +46,11 @@ const BlogDetail = ({ slug }: Props) => {
           </Grid>
         </Grid>
       </Container>
+      <ScrollToTop className='mui-fixed'>
+        <Button variant='contained' className='is-10 bs-10 rounded-full p-0 min-is-0 flex items-center justify-center'>
+          <i className='ri-arrow-up-line' />
+        </Button>
+      </ScrollToTop>
     </Box>
   )
 }

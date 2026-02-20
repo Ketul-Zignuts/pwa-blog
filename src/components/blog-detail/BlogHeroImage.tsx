@@ -1,12 +1,16 @@
 import { BlogDetailProps } from '@/types/blogTypes'
-import { Box, CardMedia } from '@mui/material'
+import { Box, CardMedia, Chip } from '@mui/material'
 import React from 'react'
+import KeyboardBackspaceIcon from '@mui/icons-material/KeyboardBackspace';
+import { useRouter } from 'next/navigation';
 
 type Props = {
   blog: BlogDetailProps
 }
 
 const BlogHeroImage = ({ blog }: Props) => {
+  const router = useRouter();
+
   return (
     <Box
       sx={{
@@ -36,6 +40,15 @@ const BlogHeroImage = ({ blog }: Props) => {
           height: '100%',
           objectFit: 'cover'
         }}
+      />
+
+      <Chip
+        variant='filled'
+        color='primary'
+        label='Back'
+        icon={<KeyboardBackspaceIcon />}
+        sx={{ position: 'absolute', top: 5, left: 5, borderRadius: 1,cursor:'pointer' }}
+        onClick={() => router.back()} 
       />
     </Box>
   )

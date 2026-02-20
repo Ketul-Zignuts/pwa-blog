@@ -17,7 +17,7 @@ export default function OfflinePage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-white/50 rounded-xl backdrop-blur-sm">
           <div className="text-center">
             <div className="text-2xl mb-1">🖼️</div>
-            <div className="font-semibold">Supabase Images</div>
+            <div className="font-bold">Supabase Images</div>
             <div className="text-sm text-green-600">Cached</div>
           </div>
           <div className="text-center">
