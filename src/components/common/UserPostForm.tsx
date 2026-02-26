@@ -193,16 +193,18 @@ const UserPostForm = ({data} : UserPostFormProps) => {
                     labelPlaceHolder='Post Status'
                 />
             </Grid>
-            <Grid item xs={12} sm={6}>
-                <CustomDatePicker
-                    name="published_at"
-                    control={control}
-                    label="Publish on date"
-                    dateFormat="MMM dd, yyyy"
-                    rules={{ required: true }}
-                    errors={errors}
-                />
-            </Grid>
+            {watch('status') === 'published' && (
+                <Grid item xs={12} sm={6}>
+                    <CustomDatePicker
+                        name="published_at"
+                        control={control}
+                        label="Publish on date"
+                        dateFormat="MMM dd, yyyy"
+                        rules={{ required: true }}
+                        errors={errors}
+                    />
+                </Grid>
+            )}
         </Grid>
     )
 }

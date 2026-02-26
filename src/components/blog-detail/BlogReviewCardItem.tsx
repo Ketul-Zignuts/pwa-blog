@@ -23,7 +23,7 @@ type BlogReviewCardItemProps = {
 const BlogReviewCardItem = ({ review }: BlogReviewCardItemProps) => {
     const { confirm } = useConfirm();
     const queryClient = useQueryClient();
-    const user = useAppSelector((state) => state.auth.user)
+    const user = useAppSelector((state) => state?.auth?.user)
 
     const deleteMutation = useMutation({
         mutationFn: (id: string) => rateReviewDeleteAction(id),

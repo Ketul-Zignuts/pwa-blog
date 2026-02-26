@@ -53,7 +53,7 @@ const UserPostItemComment = ({
   const isLightMode = settings?.mode === 'light'
   const router = useRouter()
   const queryClient = useQueryClient()
-  const user = useAppSelector((state) => state.auth.user)
+  const user = useAppSelector((state) => state?.auth?.user)
   const [replyingTo, setReplyingTo] = useState<string | null>(null)
   const [replyingToUser, setReplyingToUser] = useState<any>({})
 

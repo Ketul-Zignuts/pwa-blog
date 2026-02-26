@@ -16,7 +16,7 @@ import { updateUser } from '@/store/slices/authSlice'
 
 const UserProfileHeader = () => {
   const dispatch = useAppDispatch();
-  const user = useAppSelector((state) => state.auth.user)
+  const user = useAppSelector((state) => state?.auth?.user)
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const { mutate, isPending } = useMutation({

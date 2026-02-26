@@ -10,9 +10,7 @@ import {
   Avatar,
   Stack,
   Chip,
-  IconButton,
-  Collapse,
-  Divider
+  IconButton
 } from '@mui/material'
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined'
 import FavoriteBorderOutlinedIcon from '@mui/icons-material/FavoriteBorderOutlined'
@@ -175,6 +173,7 @@ const UserPostFeedCard = ({ item }: PostFeedProps) => {
           direction="row"
           alignItems="flex-end"
           justifyContent="space-between"
+          flexWrap={'wrap'}
           sx={{ color: 'text.secondary', width: '100%', mt: 2 }}
         >
           <Stack direction="row" spacing={1} alignItems="center">

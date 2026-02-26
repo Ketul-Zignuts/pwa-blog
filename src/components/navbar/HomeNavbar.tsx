@@ -24,11 +24,14 @@ import BlogLogo from '@/components/common/BlogLogo'
 import { Avatar, Button, CircularProgress, ClickAwayListener, Fade, MenuList, Paper, Popper, Typography } from '@mui/material'
 import themeConfig from '@/configs/themeConfig'
 import { persistor, useAppDispatch, useAppSelector } from '@/store'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { logoutAction } from '@/constants/api/auth'
 import { authLogout } from '@/store/slices/authSlice'
 import { toast } from 'react-toastify'
+import NotificationDropDown from './NotificationDropDown'
+import { useNotifications } from '@/hooks/useNotifications'
+import { useNotificationBadge } from '@/hooks/useNotificationBadge'
 
 const BadgeContentSpan = styled('span')({
     width: 8,
@@ -85,21 +88,28 @@ const StyledInputBase = styled(InputBase)(({ theme }) => ({
     }
 }))
 
-type HomeNavbarProps ={
-    showBoxShadow?:boolean
+type HomeNavbarProps = {
+    showBoxShadow?: boolean
 }
 
-export default function HomeNavbar({showBoxShadow = false} : HomeNavbarProps) {
+export default function HomeNavbar({ showBoxShadow = false }: HomeNavbarProps) {
     const router = useRouter()
+    const pathName = usePathname()
     const dispatch = useAppDispatch();
     const { settings } = useSettings()
     const isLightMode = settings?.mode === 'light'
-    const user = useAppSelector((state) => state.auth.user)
+    const user = useAppSelector((state) => state?.auth?.user)
     const queryClient = useQueryClient()
+    const [notificationOpen, setNotificationOpen] = React.useState(false)
+    const notificationRef = React.useRef<HTMLButtonElement>(null)
 
     const [open, setOpen] = React.useState(false)
     const anchorRef = React.useRef<HTMLDivElement>(null)
     const [drawerOpen, setDrawerOpen] = React.useState(false)
+    const isPostFormPage = pathName === '/blog/post';
+    const notificationsQuery = useNotifications(user?.uid || '')
+    const notificationCountData = useNotificationBadge(user?.uid || '')
+    const notificationCount = notificationCountData?.unreadCount || 0;
 
 
     const toggleDrawer = (open: boolean) => () => {
@@ -176,14 +186,14 @@ export default function HomeNavbar({showBoxShadow = false} : HomeNavbarProps) {
                         <MenuIcon />
                     </IconButton>
 
-                    <Box sx={{ cursor:'pointer' }} onClick={redirectToHome}>
+                    <Box sx={{ cursor: 'pointer' }} onClick={redirectToHome}>
                         <BlogLogo className={'w-12 h-12'} />
                     </Box>
                     <Typography
                         variant='h6'
                         noWrap
                         component='div'
-                        sx={{ display: { xs: 'none', sm: 'block' }, cursor:'pointer' }}
+                        sx={{ display: { xs: 'none', sm: 'block' }, cursor: 'pointer' }}
                         onClick={redirectToHome}
                     >
                         {themeConfig.templateName}
@@ -206,6 +216,7 @@ export default function HomeNavbar({showBoxShadow = false} : HomeNavbarProps) {
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                             <Button color="inherit" onClick={redirectToHome}>Home</Button>
                             <Button color="inherit">Filter</Button>
+                            {!isPostFormPage && (<Button color="primary" variant='contained' onClick={() => router.push('/blog/post')}>POST</Button>)}
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
                             <IconButton size='small' color='inherit'>
@@ -214,8 +225,13 @@ export default function HomeNavbar({showBoxShadow = false} : HomeNavbarProps) {
                                 </Badge>
                             </IconButton>
 
-                            <IconButton size='small' color='inherit'>
-                                <Badge badgeContent={17} color='primary'>
+                            <IconButton
+                                size='small'
+                                color='inherit'
+                                ref={notificationRef}
+                                onClick={() => setNotificationOpen(!notificationOpen)}
+                            >
+                                <Badge badgeContent={notificationCount} color='primary' max={99}>
                                     <NotificationsIcon />
                                 </Badge>
                             </IconButton>
@@ -342,6 +358,13 @@ export default function HomeNavbar({showBoxShadow = false} : HomeNavbarProps) {
                     </List>
                 </Box>
             </Drawer>
+
+            <NotificationDropDown
+                anchorRef={notificationRef}
+                open={notificationOpen}
+                onClose={() => setNotificationOpen(false)}
+                notificationsQuery={notificationsQuery}
+            />
         </Box>
     )
 }
