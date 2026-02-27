@@ -48,7 +48,7 @@ const MyPostTable = () => {
   }, [pageSize])
 
   const { data: postsData, isLoading } = useQuery({
-    queryKey: ['admin-my-posts', page, pageSize, search],
+    queryKey: ['my-posts', page, pageSize, search],
     queryFn: async () => {
       const res = await myPostListAction({
         page: page + 1,
@@ -67,7 +67,7 @@ const MyPostTable = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminPostDeleteAction(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-my-posts'] })
+      queryClient.invalidateQueries({ queryKey: ['my-posts'] })
       setPage(0)
     }
   })

@@ -26,6 +26,7 @@ import { useRouter } from 'next/navigation'
 import { PostDataType } from '@/types/postTypes'
 import { myPostListAction } from '@/constants/api/profile'
 import dayjs from 'dayjs'
+import { useAppSelector } from '@/store'
 
 const MyPostTable = () => {
   const { confirm } = useConfirm()
@@ -35,6 +36,7 @@ const MyPostTable = () => {
   const [page, setPage] = useState(0)
   const [pageSize, setPageSize] = useState(10)
   const [search, setSearch] = useState('')
+  const isAdmin = useAppSelector((state)=>state.auth.isAdminLoggedIn || false)
 
   // ✅ TANSTACK PATTERN - Exact same pagination handler
   const handlePaginationChange = useCallback((newModel: GridPaginationModel) => {
@@ -49,7 +51,7 @@ const MyPostTable = () => {
   }, [pageSize])
 
   const { data: postsData, isLoading } = useQuery({
-    queryKey: ['admin-my-posts', page, pageSize, search],
+    queryKey: ['my-posts', page, pageSize, search],
     queryFn: async () => {
       const res = await myPostListAction({
         page: page + 1,
@@ -68,7 +70,7 @@ const MyPostTable = () => {
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminPostDeleteAction(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-my-posts'] })
+      queryClient.invalidateQueries({ queryKey: ['my-posts'] })
       setPage(0)
     }
   })
@@ -243,7 +245,7 @@ const MyPostTable = () => {
             </Tooltip>
           }
           label="Edit"
-          onClick={() => router.push(`/admin/posts/${params.id}`)}
+          onClick={() => router.push(isAdmin ? `/admin/posts/${params.id}` : `/blog/posts/${params.id}`)}
           disabled={deleteMutation.isPending}
         />,
         <GridActionsCellItem
@@ -273,7 +275,7 @@ const MyPostTable = () => {
     <Button
       variant="contained"
       startIcon={<i className='ri-add-line text-[22px]' />}
-      onClick={() => router.push('/admin/posts/create')}
+      onClick={() => router.push(isAdmin ? '/admin/posts/create' : '/blog/post')}
     >
       Add Post
     </Button>

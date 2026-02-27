@@ -8,6 +8,8 @@ import type { Data } from '@/types/profileTypes'
 
 // Component Imports
 import UserProfile from '@/components/user-profile'
+import { Container } from '@mui/material'
+import HomeNavbar from '@/components/navbar/HomeNavbar'
 
 // Data Imports
 
@@ -16,7 +18,7 @@ const ChangePassword = dynamic(() => import('@/components/user-profile/change-pa
 const MyPostList = dynamic(() => import('@/components/user-profile/my-post-list/index'))
 
 // Vars
-const tabContentList = (data?: Data): { [key: string]: ReactElement } => ({
+const tabContentList = (): { [key: string]: ReactElement } => ({
   profile: <ProfileTab />,
   'my-posts': <MyPostList />,
   'change-password': <ChangePassword />
@@ -24,7 +26,14 @@ const tabContentList = (data?: Data): { [key: string]: ReactElement } => ({
 
 const ProfilePage = async () => {
 
-  return <UserProfile tabContentList={tabContentList()} fromUser={false} editable={true} />
+  return (
+    <>
+      <HomeNavbar />
+      <Container maxWidth='lg'>
+        <UserProfile tabContentList={tabContentList()} fromUser={true} editable={true} />
+      </Container>
+    </>
+  )
 }
 
 export default ProfilePage

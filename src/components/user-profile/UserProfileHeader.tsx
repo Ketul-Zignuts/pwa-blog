@@ -14,7 +14,12 @@ import { changeProfilePicAction } from '@/constants/api/profile'
 import { toast } from 'react-toastify'
 import { updateUser } from '@/store/slices/authSlice'
 
-const UserProfileHeader = () => {
+type UserProfileHeaderProps = {
+  fromUser?: boolean
+  editable?: boolean
+}
+
+const UserProfileHeader = ({ fromUser, editable }: UserProfileHeaderProps) => {
   const dispatch = useAppDispatch();
   const user = useAppSelector((state) => state?.auth?.user)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -24,7 +29,7 @@ const UserProfileHeader = () => {
       changeProfilePicAction(formData),
     onSuccess: (response) => {
       if (response?.success && response?.photoURL) {
-        dispatch(updateUser({...user,photoURL:response?.photoURL}))
+        dispatch(updateUser({ ...user, photoURL: response?.photoURL }))
         toast.success('Profile picture updated')
       } else {
         toast.error(response?.message || 'Update failed')
@@ -68,25 +73,27 @@ const UserProfileHeader = () => {
           />
 
           {/* 🔥 Edit Icon */}
-          <IconButton
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isPending}
-            size='small'
-            color='primary'
-            sx={{
-              position: 'absolute',
-              bottom: 5,
-              right: 5,
-              boxShadow: 2,
-              backgroundColor:'primary.main'
-            }}
-          >
-            {isPending ? (
-              <CircularProgress size={16} />
-            ) : (
-              <i className='ri-edit-line text-white text-[22px]' />
-            )}
-          </IconButton>
+          {editable && (
+            <IconButton
+              onClick={() => fileInputRef.current?.click()}
+              disabled={isPending}
+              size='small'
+              color='primary'
+              sx={{
+                position: 'absolute',
+                bottom: 5,
+                right: 5,
+                boxShadow: 2,
+                backgroundColor: 'primary.main'
+              }}
+            >
+              {isPending ? (
+                <CircularProgress size={16} />
+              ) : (
+                <i className='ri-edit-line text-white text-[22px]' />
+              )}
+            </IconButton>
+          )}
 
           {/* Hidden Input */}
           <input
@@ -108,10 +115,12 @@ const UserProfileHeader = () => {
             </Typography>
           </div>
 
-          <Button variant='contained' className='flex gap-2'>
-            <i className='ri-user-follow-line text-base'></i>
-            <span>Connected</span>
-          </Button>
+          {!fromUser && (
+            <Button variant='contained' className='flex gap-2'>
+              <i className='ri-user-follow-line text-base'></i>
+              <span>Connected</span>
+            </Button>
+          )}
         </div>
       </CardContent>
     </Card>

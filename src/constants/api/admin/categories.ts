@@ -5,4 +5,4 @@ export const adminCategoryListAction = (params: adminCategoryFilterParam) => get
 export const adminCategoryDeleteAction = (id: string) => deleteRequest('/admin/categories', id);
 export const adminCategoryCreateAction = (payload: CategoryDataType) => postRequest('/admin/categories', payload);
 export const adminCategoryUpdateAction = (formData: CategoryDataType) => putRequest('/admin/categories', formData, formData?.id);
-export const adminPostCategoryListDropDownAction = (params:adminCategoryFilterParam) => getRequest('/admin/dropdown/categories', params);
+export const adminPostCategoryListDropDownAction = (params:adminCategoryFilterParam) => getRequest('/general/dropdown/categories', params);

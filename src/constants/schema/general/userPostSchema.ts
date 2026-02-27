@@ -4,7 +4,6 @@ export const userPostSchema = yup.object({
   id: yup.string().nullable().notRequired().optional(),
   category_id: yup.string().uuid('Invalid category').required('Category is required'),
   title: yup.string().trim().min(5, 'Title must be at least 5 characters').max(255, 'Title is too long').required('Title is required'),
-  slug: yup.string().trim().matches(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'Slug must be URL-friendly').required('Slug is required'),
   content: yup
     .string()
     .required('Content is required')
@@ -56,7 +55,6 @@ export const userPostSchema = yup.object({
       return ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'].includes(value.type);
     }),
   status: yup.mixed<'draft' | 'published' | 'archived'>().oneOf(['draft', 'published', 'archived']).required(),
-  is_featured: yup.boolean().default(false),
   tags: yup.array()
     .transform((value, originalValue) => {
       if (Array.isArray(originalValue)) {

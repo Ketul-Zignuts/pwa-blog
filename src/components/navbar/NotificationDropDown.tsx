@@ -262,7 +262,7 @@ const NotificationDropDown = ({ anchorRef, open, onClose, notificationsQuery }: 
                         sx: { zIndex: 15000 }
                       }
                     }}>
-                      <IconButton size='small' className='text-textPrimary' onClick={(e) => handleRemoveAllNotification(e)} >
+                      <IconButton size='small' color='error' onClick={(e) => handleRemoveAllNotification(e)} >
                         <i className={'ri-delete-bin-line'} />
                       </IconButton>
                     </Tooltip>
@@ -273,7 +273,7 @@ const NotificationDropDown = ({ anchorRef, open, onClose, notificationsQuery }: 
                         sx: { zIndex: 15000 }
                       }
                     }}>
-                      <IconButton size='small' onClick={readAllNotifications} className='text-textPrimary' >
+                      <IconButton size='small' onClick={readAllNotifications} color='info' >
                         <i className={readAll ? 'ri-mail-line' : 'ri-mail-open-line'} />
                       </IconButton>
                     </Tooltip>
@@ -283,7 +283,7 @@ const NotificationDropDown = ({ anchorRef, open, onClose, notificationsQuery }: 
                       sx: { zIndex: 15000 }
                     }
                   }}>
-                    <IconButton size='small' onClick={onClickRefreshIcon} className='text-textPrimary'>
+                    <IconButton size='small' onClick={onClickRefreshIcon} color='success'>
                       <i className='ri-refresh-line' />
                     </IconButton>
                   </Tooltip>

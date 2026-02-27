@@ -14,7 +14,7 @@ import TabPanel from '@mui/lab/TabPanel'
 import UserProfileHeader from './UserProfileHeader'
 import CustomTabList from '@core/components/mui/TabList'
 
-const UserProfile = ({ tabContentList }: { tabContentList: { [key: string]: ReactElement } }) => {
+const UserProfile = ({ tabContentList ,fromUser, editable}: { tabContentList: { [key: string]: ReactElement },fromUser:boolean, editable:boolean }) => {
   // States
   const [activeTab, setActiveTab] = useState('profile')
 
@@ -23,50 +23,50 @@ const UserProfile = ({ tabContentList }: { tabContentList: { [key: string]: Reac
   }
 
   return (
-    <Grid container spacing={6}>
-      <Grid item xs={12}>
-        <UserProfileHeader />
-      </Grid>
-      {activeTab === undefined ? null : (
-        <Grid item xs={12} className='flex flex-col gap-6'>
-          <TabContext value={activeTab}>
-            <CustomTabList onChange={handleChange} variant='scrollable' pill='true'>
-              <Tab
-                label={
-                  <div className='flex items-center gap-1.5'>
-                    <i className='ri-user-3-line text-lg' />
-                    Profile
-                  </div>
-                }
-                value='profile'
-              />
-              <Tab
-                label={
-                  <div className='flex items-center gap-1.5'>
-                    <i className='ri-lock-password-line text-lg' />
-                    Change Password
-                  </div>
-                }
-                value='change-password'
-              />
-              <Tab
-                label={
-                  <div className='flex items-center gap-1.5'>
-                    <i className='ri-article-line text-lg' />
-                    My Posts
-                  </div>
-                }
-                value='my-posts'
-              />
-            </CustomTabList>
-
-            <TabPanel value={activeTab} className='p-0'>
-              {tabContentList[activeTab]}
-            </TabPanel>
-          </TabContext>
+      <Grid container spacing={6}>
+        <Grid item xs={12}>
+          <UserProfileHeader fromUser={fromUser} editable={editable} />
         </Grid>
-      )}
-    </Grid>
+        {activeTab === undefined ? null : (
+          <Grid item xs={12} className='flex flex-col gap-6'>
+            <TabContext value={activeTab}>
+              <CustomTabList onChange={handleChange} variant='scrollable' pill='true'>
+                <Tab
+                  label={
+                    <div className='flex items-center gap-1.5'>
+                      <i className='ri-user-3-line text-lg' />
+                      Profile
+                    </div>
+                  }
+                  value='profile'
+                />
+                <Tab
+                  label={
+                    <div className='flex items-center gap-1.5'>
+                      <i className='ri-lock-password-line text-lg' />
+                      Change Password
+                    </div>
+                  }
+                  value='change-password'
+                />
+                <Tab
+                  label={
+                    <div className='flex items-center gap-1.5'>
+                      <i className='ri-article-line text-lg' />
+                      My Posts
+                    </div>
+                  }
+                  value='my-posts'
+                />
+              </CustomTabList>
+
+              <TabPanel value={activeTab} className='p-0'>
+                {tabContentList[activeTab]}
+              </TabPanel>
+            </TabContext>
+          </Grid>
+        )}
+      </Grid>
   )
 }
 

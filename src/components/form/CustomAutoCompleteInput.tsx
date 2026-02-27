@@ -14,7 +14,6 @@ import { useEffect, useState } from 'react'
 interface Option {
   label: string
   value: string | number
-  [key: string]: any
 }
 
 interface Props {
@@ -42,17 +41,25 @@ const CustomAutocompleteInput = ({
   labelPlaceHolder,
   multiple = false
 }: Props) => {
-  const [inputValue, setInputValue] = useState('')
+  const isSearchable = !!onSearch
+
+  const [searchText, setSearchText] = useState('')
   const [debouncedValue, setDebouncedValue] = useState('')
 
   useDebounce(
-    () => setDebouncedValue(inputValue),
+    () => {
+      if (isSearchable) {
+        setDebouncedValue(searchText)
+      }
+    },
     debounceMs,
-    [inputValue]
+    [searchText]
   )
 
   useEffect(() => {
-    onSearch?.(debouncedValue)
+    if (isSearchable) {
+      onSearch?.(debouncedValue)
+    }
   }, [debouncedValue])
 
   return (
@@ -74,8 +81,7 @@ const CustomAutocompleteInput = ({
               multiple={multiple}
               options={options}
               value={selectedValue}
-              inputValue={inputValue}
-              getOptionLabel={(opt) => opt.label}
+              getOptionLabel={(opt) => opt?.label || ''}
               isOptionEqualToValue={(opt, val) =>
                 opt.value === val.value
               }
@@ -83,13 +89,9 @@ const CustomAutocompleteInput = ({
               clearOnEscape
 
               onInputChange={(_, value, reason) => {
+                if (!isSearchable) return
                 if (reason === 'input') {
-                  setInputValue(value)
-                }
-
-                if (reason === 'clear') {
-                  setInputValue('')
-                  field.onChange(multiple ? [] : '')
+                  setSearchText(value)
                 }
               }}
 
@@ -97,11 +99,9 @@ const CustomAutocompleteInput = ({
                 if (multiple) {
                   const values = (val as Option[]).map(v => v.value)
                   field.onChange(values)
-                  setInputValue('')
                 } else {
                   const option = val as Option | null
                   field.onChange(option?.value || '')
-                  setInputValue(option?.label || '')
                 }
               }}
 

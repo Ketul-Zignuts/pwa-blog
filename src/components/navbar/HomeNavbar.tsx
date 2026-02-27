@@ -93,10 +93,10 @@ type HomeNavbarProps = {
 }
 
 export default function HomeNavbar({ showBoxShadow = false }: HomeNavbarProps) {
-    const router = useRouter()
-    const pathName = usePathname()
+    const router = useRouter();
+    const pathName = usePathname();
     const dispatch = useAppDispatch();
-    const { settings } = useSettings()
+    const { settings } = useSettings();
     const isLightMode = settings?.mode === 'light'
     const user = useAppSelector((state) => state?.auth?.user)
     const queryClient = useQueryClient()

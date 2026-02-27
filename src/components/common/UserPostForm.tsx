@@ -13,9 +13,10 @@ import { PostDetailDataType } from '@/types/postTypes';
 
 type UserPostFormProps = {
     data?:PostDetailDataType
+    fromUser?:boolean
 }
 
-const UserPostForm = ({data} : UserPostFormProps) => {
+const UserPostForm = ({data,fromUser} : UserPostFormProps) => {
     const [categoryList, setCategoryList] = useState<any[]>([])
     const { control, watch, setValue, trigger, formState: { errors } } = useFormContext();
     const { fields, append, remove } = useFieldArray({
@@ -81,7 +82,7 @@ const UserPostForm = ({data} : UserPostFormProps) => {
                     }}
                 />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={6} sx={{display:fromUser ? 'none' : 'auto'}}>
                 <CustomTextInput
                     control={control as any}
                     variant='outlined'
@@ -95,7 +96,7 @@ const UserPostForm = ({data} : UserPostFormProps) => {
                     disabled={getSlugMutation?.isPending}
                 />
             </Grid>
-            <Grid item xs={6}>
+            <Grid item xs={fromUser ? 12 : 6}>
                 <CustomTextInput
                     control={control as any}
                     variant='outlined'

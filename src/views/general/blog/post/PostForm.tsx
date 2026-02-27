@@ -1,28 +1,23 @@
 'use client'
-import React, { useEffect, useState } from 'react'
+import React, { useEffect } from 'react'
 import UserPostForm from '@/components/common/UserPostForm';
-import CustomAutocompleteInput from '@/components/form/CustomAutoCompleteInput';
-import { adminPostCreateAction, adminPostUpdateAction, adminPostUserListDropDownAction } from '@/constants/api/admin/posts';
-import { addUpdatePostSchema } from '@/constants/schema/admin/postSchema';
-import { stringToColor } from '@/utils/Utils';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Avatar, Box, Button, Card, CardContent, CardHeader, CircularProgress, Container, Divider, Grid, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, CardHeader, CircularProgress, Container, Divider, Grid, Typography } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { FormProvider, useForm } from 'react-hook-form';
-import CustomTextInput from '@/components/form/CustomTextInput';
-import CustomSwitch from '@/components/form/CustomSwitch';
 import dayjs from 'dayjs';
-import { useAppSelector } from '@/store';
 import { toast } from 'react-toastify';
-import { globalConfig } from '@/configs/globalConfig';
 import { useRouter } from 'next/navigation';
 import { PostDetailDataType } from '@/types/postTypes';
 import AppBreadcrumbs from '@/components/common/AppBreadcrumbs';
 import HomeNavbar from '@/components/navbar/HomeNavbar';
+import { userPostSchema } from '@/constants/schema/general/userPostSchema';
+import UserProfileHeader from '@/components/user-profile/UserProfileHeader';
+import { calculateReadTime } from '@/utils/Utils';
+import { userPostCreateAction, userPostUpdateAction } from '@/constants/api/post';
 
 interface AddUpdatePostFormData {
     id: string | null;
-    user_id: string;
     category_id: string | null;
     title: string;
     slug: string;
@@ -30,17 +25,13 @@ interface AddUpdatePostFormData {
     excerpt: string | null;
     hero_image: string | null;
     status: 'draft' | 'published' | 'archived';
-    is_featured: boolean;
     read_time: number | null;
     tags: string[];
-    seo_title: string | null;
-    seo_description: string | null;
     published_at: Date | string | null;
 }
 
 const defaultValues: AddUpdatePostFormData = {
     id: null,
-    user_id: '',
     category_id: '',
     title: '',
     slug: '',
@@ -48,23 +39,18 @@ const defaultValues: AddUpdatePostFormData = {
     excerpt: null,
     hero_image: null,
     status: 'draft',
-    is_featured: false,
     read_time: null,
     tags: [],
-    seo_title: null,
-    seo_description: null,
     published_at: dayjs().toDate(),
 }
 
-type AdminPostFormTypeProps = {
+type PostFormTypeProps = {
     data?: PostDetailDataType
     fromEdit?: boolean
 }
 
 
-const PostForm = ({ data, fromEdit }: AdminPostFormTypeProps) => {
-    const [users, setUsers] = useState<any[]>([])
-    const isRoAdmin = useAppSelector((state) => state?.auth?.user?.isroadmin)
+const PostForm = ({ data, fromEdit }: PostFormTypeProps) => {
     const queryClient = useQueryClient()
     const router = useRouter();
 
@@ -75,7 +61,7 @@ const PostForm = ({ data, fromEdit }: AdminPostFormTypeProps) => {
 
     const methods = useForm<AddUpdatePostFormData>({
         defaultValues,
-        resolver: yupResolver(addUpdatePostSchema as any),
+        resolver: yupResolver(userPostSchema as any),
     })
 
     const {
@@ -87,22 +73,13 @@ const PostForm = ({ data, fromEdit }: AdminPostFormTypeProps) => {
         formState: { errors }
     } = methods
 
-    const userSearchMutation = useMutation({
-        mutationFn: (search: string) => adminPostUserListDropDownAction({ search }),
-        onSuccess: (res) => {
-            if (Array.isArray(res)) {
-                setUsers(res)
-            }
-        }
-    })
-
     const { mutate, isPending } = useMutation({
         mutationFn: (data: AddUpdatePostFormData) => {
-            const apiCall = data?.id ? adminPostUpdateAction : adminPostCreateAction;
+            const apiCall = data?.id ? userPostUpdateAction : userPostCreateAction;
             return apiCall(data);
         },
         onSuccess: () => {
-            router.push('/admin/posts')
+            router.push('/home')
             toast.success(`Post ${data?.id ? 'updated' : 'created'} successfully!`);
         },
         onError: (err: any) => {
@@ -110,22 +87,21 @@ const PostForm = ({ data, fromEdit }: AdminPostFormTypeProps) => {
             toast.error(message);
         },
         onSettled: () => {
-            queryClient.invalidateQueries({ queryKey: ['admin-posts'] });
+            // queryClient.invalidateQueries({ queryKey: ['admin-posts'] });
         }
     });
 
     const onSubmit = async (data: any) => {
-        if (isRoAdmin) {
-            toast.error(globalConfig?.RO_ADMIN_MESSAGE)
-            return
+        const payload = {
+            ...data,
+            read_time:calculateReadTime(data?.content)
         }
-        await mutate(data);
+        await mutate(payload);
     };
 
     useEffect(() => {
         methods?.reset({
             id: data?.id,
-            user_id: data?.user_id,
             category_id: data?.category_id,
             title: data?.title,
             slug: data?.slug,
@@ -133,11 +109,8 @@ const PostForm = ({ data, fromEdit }: AdminPostFormTypeProps) => {
             excerpt: data?.excerpt || null,
             hero_image: null,
             status: data?.status || 'draft',
-            is_featured: data?.is_featured || false,
             read_time: data?.read_time || null,
             tags: Array.isArray(data?.tags) && data?.tags?.length > 0 ? data.tags.map((item: string) => ({ value: item })) as any[] : [],
-            seo_title: data?.seo_title || null,
-            seo_description: data?.seo_description || null,
             published_at: data?.published_at ? dayjs(data?.published_at).toDate() : dayjs().toDate(),
         })
     }, [data])
@@ -145,10 +118,13 @@ const PostForm = ({ data, fromEdit }: AdminPostFormTypeProps) => {
     return (
         <>
             <HomeNavbar />
-            <Container maxWidth="lg" sx={{my:10}}>
+            <Container maxWidth="lg" sx={{ mb: 10 }}>
                 <Grid container spacing={0}>
-                    <Grid item xs={12}>
+                    <Grid item xs={12} sx={{ mt: 2 }}>
                         <AppBreadcrumbs path={path} />
+                    </Grid>
+                    <Grid item xs={12} sx={{ mb: 5 }} >
+                        <UserProfileHeader fromUser={true} editable={false} />
                     </Grid>
                     <Grid item xs={12}>
                         <FormProvider {...methods}>
@@ -164,20 +140,12 @@ const PostForm = ({ data, fromEdit }: AdminPostFormTypeProps) => {
                                 <CardContent>
                                     <Grid container spacing={2}>
                                         <Grid item xs={12}>
-                                            <UserPostForm data={data} />
+                                            <UserPostForm data={data} fromUser={true} />
                                         </Grid>
                                         <Divider sx={{ height: 2, width: '100%', my: 5 }} />
-                                        <Grid item xs={12} sm={6}>
-                                            <CustomSwitch
-                                                name="is_featured"
-                                                label="Featured"
-                                                control={control}
-                                                errors={errors}
-                                            />
-                                        </Grid>
-                                        <Grid item xs={12} sm={6}>
+                                        <Grid item xs={12}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 2 }}>
-                                                <Button variant='outlined' color='info' onClick={() => router.push('/admin/posts')}>Cancel</Button>
+                                                <Button variant='outlined' color='info' onClick={() => router.back()}>Cancel</Button>
                                                 <Button variant='contained' type='button' disabled={isPending} onClick={handleSubmit(onSubmit)} startIcon={isPending ? <CircularProgress size={20} color='warning' /> : null}>
                                                     Submit
                                                 </Button>
