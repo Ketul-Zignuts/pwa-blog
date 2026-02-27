@@ -14,12 +14,15 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url)
     const limit = Number(searchParams.get('limit')) || 10
-    const cursor = searchParams.get('cursor')
+    const page = Number(searchParams.get('page') || 1)
+    const from = (page - 1) * limit
+    const to = from + limit - 1 // Supabase range is inclusive
 
     // Build query
-    let query = adminSupabase
+    const { data, error, count } = await adminSupabase
       .from('notifications')
-      .select(`
+      .select(
+        `
         id,
         recipient_uid,
         actor_uid,
@@ -35,60 +38,131 @@ export async function GET(req: NextRequest) {
           displayName,
           photoURL
         )
-      `)
+      `,
+        { count: 'exact' }
+      )
       .eq('recipient_uid', uid)
+      .order('is_read', { ascending: true })
       .order('created_at', { ascending: false })
-      .limit(limit)
+      .range(from, to)
 
-    if (cursor) {
-      console.log('Applying cursor filter:', cursor)
-      query = query.lt('created_at', cursor)
-    }
+    if (error) throw error
 
-    let data, error
-    try {
-      ({ data, error } = await query)
-    } catch (err) {
-      console.error('Supabase query threw exception:', err)
-      return NextResponse.json(
-        { success: false, message: 'Supabase query threw exception' },
-        { status: 500 }
-      )
-    }
-
-    if (error) {
-      console.error('Supabase query error object:', error)
-      return NextResponse.json(
-        { success: false, message: error.message || 'Supabase query error' },
-        { status: 500 }
-      )
-    }
-
-    if (!data || data.length === 0) {
-      console.log('No notifications found')
-      return NextResponse.json({
-        success: true,
-        data: [],
-        nextCursor: null,
-        hasMore: false,
-      })
-    }
-
-    const nextCursor =
-      data.length === limit
-        ? data[data.length - 1].created_at
-        : null
+    // Determine if more pages exist
+    const hasMore = (count || 0) > to + 1
 
     return NextResponse.json({
       success: true,
       data,
-      nextCursor,
-      hasMore: !!nextCursor,
+      page: page + 1, // next page number
+      hasMore,
+      total: count || 0,
     })
-  } catch (error) {
-    console.error('Notifications GET catch error:', error)
+  } catch (error: any) {
+    console.error('Notifications GET error:', error)
     return NextResponse.json(
-      { success: false, message: 'Something went wrong' },
+      { success: false, message: error.message || 'Something went wrong' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PATCH(req: NextRequest) {
+  try {
+    const uid = req.headers.get('x-user-id')
+
+    if (!uid) {
+      return NextResponse.json(
+        { success: false, message: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const body = await req.json()
+    const { action, id, all_read } = body
+
+    if (action === 'mark_read') {
+      if (all_read) {
+        const { error } = await adminSupabase
+          .from('notifications')
+          .update({ is_read: true })
+          .eq('recipient_uid', uid)
+          .eq('is_read', false)
+
+        if (error) throw error
+
+        return NextResponse.json({
+          success: true,
+          message: 'All notifications marked as read',
+        })
+      }
+
+      if (!id) {
+        return NextResponse.json(
+          { success: false, message: 'Notification id required' },
+          { status: 400 }
+        )
+      }
+
+      const { error } = await adminSupabase
+        .from('notifications')
+        .update({ is_read: true })
+        .eq('id', id)
+        .eq('recipient_uid', uid)
+
+      if (error) throw error
+
+      return NextResponse.json({
+        success: true,
+        message: 'Notification marked as read',
+      })
+    }
+
+    if (action === 'delete') {
+      if (all_read) {
+        const { error } = await adminSupabase
+          .from('notifications')
+          .delete()
+          .eq('recipient_uid', uid)
+          .eq('is_read', true)
+
+        if (error) throw error
+
+        return NextResponse.json({
+          success: true,
+          message: 'All read notifications deleted',
+        })
+      }
+
+      if (!id) {
+        return NextResponse.json(
+          { success: false, message: 'Notification id required' },
+          { status: 400 }
+        )
+      }
+
+      const { error } = await adminSupabase
+        .from('notifications')
+        .delete()
+        .eq('id', id)
+        .eq('recipient_uid', uid)
+
+      if (error) throw error
+
+      return NextResponse.json({
+        success: true,
+        message: 'Notification deleted',
+      })
+    }
+
+    return NextResponse.json(
+      { success: false, message: 'Invalid action' },
+      { status: 400 }
+    )
+  } catch (error: any) {
+    console.error('Notifications PATCH error:', error)
+    return NextResponse.json(
+      { success: false, message: error.message || 'Something went wrong' },
       { status: 500 }
     )
   }

@@ -1,49 +1,39 @@
-'use client'
-
 import { useEffect } from 'react'
 import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@supabase/supabase-js'
+import { RealTimeNotificationData } from '@/types/notificationTypes'
 import { getNotificationList } from '@/constants/api/notification'
-import { RealNotificationInfiniteData, RealNotificationPage, RealTimeNotificationData } from '@/types/notificationTypes'
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 )
 
-export type { 
-  RealTimeNotificationData as Notification,
-  RealNotificationPage as NotificationResponse, 
-  RealNotificationInfiniteData 
-} from '@/types/notificationTypes'
+export interface NotificationPage {
+  success: boolean
+  data: RealTimeNotificationData[]
+  page: number       // next page number
+  hasMore: boolean
+  total: number
+}
 
-export interface NotificationResponseInfinite {
-  pages: RealNotificationPage[]
-  pageParams: (string | null)[]
+export interface NotificationInfiniteData {
+  pages: NotificationPage[]
+  pageParams: (number | null)[]
 }
 
 export function useNotifications(uid: string) {
   const queryClient = useQueryClient()
 
-  const query = useInfiniteQuery<
-    RealNotificationPage,
-    Error, 
-    RealNotificationInfiniteData,
-    string[]
-  >({
-    queryKey: ['notifications'],
-    queryFn: async ({ pageParam = undefined }: { pageParam: any }) => {
-      const params = new URLSearchParams()
-      if (pageParam) params.append('cursor', pageParam)
-      params.append('limit', '10')
-    
-      return await getNotificationList(params) as RealNotificationPage
-    },
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
-    initialPageParam: undefined,
-    enabled: !!uid,
-  })
+const query = useInfiniteQuery<NotificationPage, Error>({
+  queryKey: ['notifications', uid],
+  queryFn: async ({ pageParam = 1 }) => getNotificationList({page: pageParam}),
+  getNextPageParam: (lastPage) => lastPage.hasMore ? lastPage.page : undefined,
+  initialPageParam: 1,
+  enabled: !!uid,
+})
 
+  // Supabase realtime updates
   useEffect(() => {
     if (!uid) return
 
@@ -58,12 +48,9 @@ export function useNotifications(uid: string) {
           filter: `recipient_uid=eq.${uid}`,
         },
         async (payload: any) => {
-          console.log('Raw realtime payload:', payload.new)
-          
           const newNotif = payload.new as RealTimeNotificationData
-          let newNotification: RealTimeNotificationData = newNotif
-          
-          // ✅ FETCH ACTOR DATA
+          let newNotification = newNotif
+
           if (newNotif.actor_uid) {
             const { data: actorData } = await supabase
               .from('users')
@@ -76,23 +63,21 @@ export function useNotifications(uid: string) {
               actor: actorData || undefined
             }
           }
-          queryClient.setQueryData<RealNotificationInfiniteData | undefined>(
-            ['notifications', uid], 
-            (oldData: RealNotificationInfiniteData | undefined) => {
-              if (!oldData || !oldData.pages || oldData.pages.length === 0) return oldData
 
-              const updatedPages = oldData.pages.map((page: RealNotificationPage, index: number) =>
-                index === 0
-                  ? { ...page, data: [newNotification, ...page.data] }
-                  : page
-              )
+          queryClient.setQueryData<NotificationInfiniteData>(['notifications', uid], (oldData) => {
+            if (!oldData || !oldData.pages || oldData.pages.length === 0) return oldData
 
-              return { 
-                ...oldData, 
-                pages: updatedPages 
-              }
+            const updatedPages = oldData.pages.map((page, index) =>
+              index === 0
+                ? { ...page, data: [newNotification, ...page.data] }
+                : page
+            )
+
+            return {
+              ...oldData,
+              pages: updatedPages
             }
-          )
+          })
         }
       )
       .subscribe()
@@ -100,7 +85,7 @@ export function useNotifications(uid: string) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [uid, queryClient, supabase])
+  }, [uid, queryClient])
 
   return query
 }

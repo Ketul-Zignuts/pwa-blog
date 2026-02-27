@@ -19,7 +19,7 @@ export function useNotificationBadge(uid: string) {
   const queryClient = useQueryClient()
 
   const badgeQuery = useQuery<BadgeResponse>({
-    queryKey: ['notifications-count'],
+    queryKey: ['notifications-count',uid],
     queryFn: () => getNotificationCount({}),
     enabled: !!uid,
     refetchInterval: 30_000,

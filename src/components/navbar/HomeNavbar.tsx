@@ -212,10 +212,10 @@ export default function HomeNavbar({ showBoxShadow = false }: HomeNavbarProps) {
                     <Box sx={{ flexGrow: 1 }} />
 
                     {/* Desktop Icons Only */}
-                    <Box sx={{ display: { xs: 'none', md: 'flex' } }}>
+                    <Box sx={{ display: { xs: 'none', sm: 'flex' } }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Button color="inherit" onClick={redirectToHome}>Home</Button>
-                            <Button color="inherit">Filter</Button>
+                            <Button color="inherit" onClick={redirectToHome} sx={{display:{sm:'none',md:'block'}}}>Home</Button>
+                            <Button color="inherit" sx={{display:{sm:'none',md:'block'}}}>Filter</Button>
                             {!isPostFormPage && (<Button color="primary" variant='contained' onClick={() => router.push('/blog/post')}>POST</Button>)}
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -324,6 +324,7 @@ export default function HomeNavbar({ showBoxShadow = false }: HomeNavbarProps) {
                 anchor='left'
                 open={drawerOpen}
                 onClose={toggleDrawer(false)}
+                sx={{ position: 'relative' }}
             >
                 <Box
                     sx={{ width: 250 }}
@@ -333,14 +334,26 @@ export default function HomeNavbar({ showBoxShadow = false }: HomeNavbarProps) {
                     <List>
                         <ListItem>
                             <ListItemIcon>
-                                <MailIcon />
+                                <BlogLogo />
                             </ListItemIcon>
-                            <ListItemText primary='Messages' />
+                            <ListItemText primary={themeConfig.templateName} />
                         </ListItem>
-
+                        <Divider sx={{ my: 3 }} />
                         <ListItem>
                             <ListItemIcon>
-                                <NotificationsIcon />
+                                <MailIcon />
+                            </ListItemIcon>
+                            <ListItemText primary='My Profile' />
+                        </ListItem>
+
+                        <ListItem sx={{ cursor: 'pointer' }} onClick={() => setNotificationOpen(!notificationOpen)}>
+                            <ListItemIcon>
+                                <Badge badgeContent={notificationCount} color='primary' max={99} anchorOrigin={{
+                                    vertical: 'top',
+                                    horizontal: 'left',
+                                }}>
+                                    <NotificationsIcon />
+                                </Badge>
                             </ListItemIcon>
                             <ListItemText primary='Notifications' />
                         </ListItem>
@@ -348,12 +361,36 @@ export default function HomeNavbar({ showBoxShadow = false }: HomeNavbarProps) {
 
                     <Divider />
 
-                    <List>
-                        <ListItem>
-                            <ListItemIcon>
-                                <AccountCircle />
-                            </ListItemIcon>
-                            <ListItemText primary='Profile' />
+                    <List sx={{
+                        position: 'absolute',
+                        bottom: 50,
+                        display: 'flex',
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        width: '100%'
+                    }}>
+                        <ListItem
+                            sx={{
+                                flexDirection: 'column',
+                                alignItems: 'center',
+                                textAlign: 'center',
+                                gap: 1
+                            }}
+                        >
+                            <Avatar
+                                alt={user?.displayName || ''}
+                                src={user?.photoURL || '/images/avatars/1.png'}
+                                sx={{ width: 52, height: 52 }}
+                            />
+
+                            <ListItemText
+                                primary={user?.displayName}
+                                secondary={user?.email || user?.phoneNumber}
+                                primaryTypographyProps={{ fontWeight: 600 }}
+                                secondaryTypographyProps={{ fontSize: 13 }}
+                                sx={{ m: 0 }}
+                            />
                         </ListItem>
                     </List>
                 </Box>

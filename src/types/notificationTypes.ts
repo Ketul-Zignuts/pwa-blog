@@ -16,14 +16,15 @@ export interface RealTimeNotificationData {
   }
 }
 
-export interface RealNotificationPage {
+export interface NotificationPage {
   success: boolean
   data: RealTimeNotificationData[]
-  nextCursor: string | null
+  page: number
   hasMore: boolean
+  total: number
 }
 
 export interface RealNotificationInfiniteData {
-  pages: RealNotificationPage[]
+  pages: NotificationPage[]
   pageParams: (string | null)[]
 }
