@@ -9,24 +9,33 @@ export async function GET(
   try {
     const logInUserUid = await getPublicUserUid(req)
     const { slug } = params
-    const postId = req.nextUrl.searchParams.get('post_id')
 
-    // Step 1: Get post data (your existing query)
-    let query = adminSupabase
+    // ✅ STEP 1: INCREMENT VIEW BY SLUG (always first)
+    const { data: slugData } = await adminSupabase
+      .from('posts')
+      .select('id')
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single()
+    
+    if (slugData?.id) {
+      // Increment view count
+      await adminSupabase.rpc('increment_post_views', { 
+        post_id_param: slugData.id 
+      })
+    }
+
+    // ✅ STEP 2: Get full post data
+    const { data, error } = await adminSupabase
       .from('posts')
       .select(`
         *,
         category:categories(id,name,slug),
         user:users!posts_user_id_fkey(uid,displayName,bio,photoURL)
       `)
-
-    if (postId) {
-      query = query.eq('id', postId)
-    } else {
-      query = query.eq('slug', slug)
-    }
-
-    const { data, error } = await query.single()
+      .eq('slug', slug)
+      .eq('status', 'published')
+      .single()
 
     if (error || !data || !data.user) {
       return NextResponse.json(
@@ -35,7 +44,7 @@ export async function GET(
       )
     }
 
-    // Step 2: Check if logged-in user follows this author (simple query)
+    // ✅ STEP 3: Check if logged-in user follows author
     let isFollowing = false
     if (logInUserUid && data.user.uid !== logInUserUid) {
       const { count } = await adminSupabase
@@ -47,7 +56,7 @@ export async function GET(
       isFollowing = (count || 0) > 0
     }
 
-    // ✅ No spread issues - direct assignment
+    // ✅ STEP 4: Clean data
     const cleanedData = {
       ...data,
       user: {
@@ -61,6 +70,7 @@ export async function GET(
       data: cleanedData
     })
   } catch (err: any) {
+    console.error('Post detail error:', err)
     return NextResponse.json(
       { success: false, message: err.message },
       { status: 500 }

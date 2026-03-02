@@ -2,7 +2,7 @@ import { combineReducers } from "redux";
 import { persistReducer } from "redux-persist";
 import authReducer from "@/store/slices/authSlice";
 import homeReducer from "@/store/slices/homeSlice"
-import storage from "redux-persist/lib/storage";
+import storage from '@/lib/storage';
 
 const reducer = combineReducers({
   auth: persistReducer(

@@ -24,13 +24,14 @@ const HomeFeatured = () => {
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+
       <Box
         component="img"
         src={`${process.env.NEXT_PUBLIC_SUPABASE_BUCKET_URL}/post-images/${post?.hero_image}`}
         alt={post.title}
         sx={{
           width: '100%',
-          height: 300,
+          aspectRatio: '16/10',
           objectFit: 'cover',
           borderRadius: 2
         }}

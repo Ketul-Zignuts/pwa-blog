@@ -30,6 +30,7 @@ import { getRandomMuiColor } from '@/utils/Utils'
 import { useSettings } from '@core/hooks/useSettings'
 import { patchNotification } from '@/constants/api/notification'
 import MarkReadIcon from './MarkReadIcon'
+import { useConfirm } from '@/hooks/useConfirm'
 
 
 export interface NotificationsType {
@@ -115,6 +116,7 @@ const transformNotifications = (notificationsQuery: ReturnType<typeof useNotific
 const NotificationDropDown = ({ anchorRef, open, onClose, notificationsQuery }: NotificationDropDownProps) => {
   const ref = useRef<HTMLDivElement | null>(null)
   const { settings } = useSettings()
+  const { confirm } = useConfirm()
   const queryClient = useQueryClient()
   const user = useAppSelector((state) => state?.auth?.user)
 
@@ -181,6 +183,16 @@ const NotificationDropDown = ({ anchorRef, open, onClose, notificationsQuery }: 
           }))
         }
 
+        // ==============================
+        // DELETE ALL (READ + UNREAD)
+        // ==============================
+        if (variables.action === 'delete_all') {
+          updatedPages = oldData.pages.map((page: any) => ({
+            ...page,
+            data: []
+          }))
+        }
+
         return {
           ...oldData,
           pages: updatedPages
@@ -189,6 +201,19 @@ const NotificationDropDown = ({ anchorRef, open, onClose, notificationsQuery }: 
       queryClient.invalidateQueries({ queryKey: ['notifications-count', user?.uid] })
     }
   })
+
+  const handleDeleteAllNotification = async (event: MouseEvent<HTMLElement>) => {
+    event.stopPropagation()
+    const ok = await confirm({
+      title: 'Delete All Notifications',
+      description: 'This action cannot be undone',
+      confirmText: 'Delete'
+    })
+
+    if (!ok) return
+
+    await handlePatchNotification.mutate({ action: 'delete_all', all_read: false, id: '' })
+  }
 
   const handleReadNotification = async (event: MouseEvent<HTMLElement>, id: string) => {
     event.stopPropagation()
@@ -364,7 +389,7 @@ const NotificationDropDown = ({ anchorRef, open, onClose, notificationsQuery }: 
 
                 <Divider />
                 <div className='p-4'>
-                  <Button fullWidth variant='contained' size='small'>View All Notifications</Button>
+                  <Button fullWidth variant='contained' size='small' color='error' onClick={(e) => handleDeleteAllNotification(e)}>Delete All Notifications</Button>
                 </div>
               </div>
             </ClickAwayListener>

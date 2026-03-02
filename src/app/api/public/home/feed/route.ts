@@ -9,7 +9,7 @@ export async function GET(req: NextRequest) {
     const uid = await getPublicUserUid(req)
 
     const page = Number(searchParams.get('page') ?? 1)
-    const category = searchParams.get('category')
+    const category = searchParams.get('category_id')
     const search = searchParams.get('search')
     const limit = 10
     const from = (page - 1) * limit
@@ -28,6 +28,8 @@ export async function GET(req: NextRequest) {
       .select(selectFields, { count: 'exact' })
       .eq('status', 'published')
       .lte('published_at', new Date().toISOString())
+      // ✅ CHANGED: Featured first, then newest within featured
+      .order('is_featured', { ascending: false })
       .order('published_at', { ascending: false })
       .range(from, to)
 

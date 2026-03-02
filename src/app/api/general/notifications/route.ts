@@ -155,6 +155,20 @@ export async function PATCH(req: NextRequest) {
       })
     }
 
+    if (action === 'delete_all') {
+      const { error } = await adminSupabase
+        .from('notifications')
+        .delete()
+        .eq('recipient_uid', uid)
+
+      if (error) throw error
+
+      return NextResponse.json({
+        success: true,
+        message: 'All notifications deleted',
+      })
+    }
+
     return NextResponse.json(
       { success: false, message: 'Invalid action' },
       { status: 400 }

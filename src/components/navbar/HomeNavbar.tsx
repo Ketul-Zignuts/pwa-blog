@@ -199,7 +199,8 @@ export default function HomeNavbar({ showBoxShadow = false }: HomeNavbarProps) {
                         {themeConfig.templateName}
                     </Typography>
 
-                    <Search>
+                    <Box sx={{display:{sm:'none',xs:'none',md:'block'}}}>
+                        <Search>
                         <SearchIconWrapper>
                             <SearchIcon />
                         </SearchIconWrapper>
@@ -208,12 +209,13 @@ export default function HomeNavbar({ showBoxShadow = false }: HomeNavbarProps) {
                             inputProps={{ 'aria-label': 'search' }}
                         />
                     </Search>
+                    </Box>
 
                     <Box sx={{ flexGrow: 1 }} />
 
                     {/* Desktop Icons Only */}
-                    <Box sx={{ display: { xs: 'none', sm: 'flex' } }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box sx={{ display:'flex' }}>
+                        <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1 }}>
                             <Button color="inherit" onClick={redirectToHome} sx={{display:{sm:'none',md:'block'}}}>Home</Button>
                             <Button color="inherit" sx={{display:{sm:'none',md:'block'}}}>Filter</Button>
                             {!isPostFormPage && (<Button color="primary" variant='contained' onClick={() => router.push('/blog/post')}>POST</Button>)}

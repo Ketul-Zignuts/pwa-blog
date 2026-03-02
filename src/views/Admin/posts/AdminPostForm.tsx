@@ -3,7 +3,7 @@ import UserPostForm from '@/components/common/UserPostForm';
 import CustomAutocompleteInput from '@/components/form/CustomAutoCompleteInput';
 import { adminPostCreateAction, adminPostUpdateAction, adminPostUserListDropDownAction } from '@/constants/api/admin/posts';
 import { addUpdatePostSchema } from '@/constants/schema/admin/postSchema';
-import { stringToColor } from '@/utils/Utils';
+import { calculateReadTime, stringToColor } from '@/utils/Utils';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Avatar, Box, Button, Card, CardContent, CardHeader, CircularProgress, Divider, Grid, Typography } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -118,7 +118,11 @@ const AdminPostForm = ({ data, fromEdit }: AdminPostFormTypeProps) => {
       toast.error(globalConfig?.RO_ADMIN_MESSAGE)
       return
     }
-    await mutate(data);
+    const payload = {
+      ...data,
+      read_time: calculateReadTime(data?.content)
+    }
+    await mutate(payload);
   };
 
   useEffect(() => {
@@ -168,7 +172,7 @@ const AdminPostForm = ({ data, fromEdit }: AdminPostFormTypeProps) => {
                 }}
                 errors={errors}
                 labelPlaceHolder='Author Name'
-                renderOption={(user) => (
+                renderOption={(user:any) => (
                   <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
                     <Avatar src={user?.avatar} sx={{ width: 36, height: 36, bgcolor: stringToColor(user?.label || user?.email || 'user') }} />
                     <Box>

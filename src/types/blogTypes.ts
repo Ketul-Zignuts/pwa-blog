@@ -41,6 +41,7 @@ export interface BlogDetailProps {
     displayName: string
     bio: string
     photoURL: string
+    is_following:boolean
   }
 }
 

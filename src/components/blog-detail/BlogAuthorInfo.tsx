@@ -5,6 +5,7 @@ import {
     Avatar,
     Box,
     Button,
+    CircularProgress,
     Stack,
     Typography
 } from '@mui/material'
@@ -15,13 +16,32 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime'
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday'
 import React from 'react'
 import dayjs from 'dayjs'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { followAuthorAction } from '@/constants/api/general/general'
+import { toast } from 'react-toastify'
 
 type BlogAuthorInfoProps = {
     blog: BlogDetailProps
 }
 
 const BlogAuthorInfo = ({ blog }: BlogAuthorInfoProps) => {
+    const queryClient = useQueryClient();
     const publishedDate = blog?.published_at ? dayjs(blog.published_at).format('DD MMM YYYY') : '-'
+
+    const followMutation = useMutation({
+        mutationFn: ({ following_uid }: { following_uid: string }) => followAuthorAction({ following_uid }),
+        onError: (err: any) => {
+            const message = err?.response?.data?.message || 'Something went wrong!';
+            toast.error(message);
+        },
+        onSuccess: (res) => {
+            const isNowFollowing = res?.following
+            const authorName = blog?.user?.displayName || 'User'
+            const message = isNowFollowing ? `You're now following ${authorName} 🎉` : `You unfollowed ${authorName}`
+            toast.success(message)
+            queryClient.invalidateQueries({ queryKey: ['blogDetail', blog?.slug] })
+        }
+    })
 
     return (
         <Box
@@ -66,8 +86,11 @@ const BlogAuthorInfo = ({ blog }: BlogAuthorInfoProps) => {
                     variant="contained"
                     size="small"
                     color='info'
+                    onClick={() => followMutation?.mutate({ following_uid: blog?.user?.uid })}
+                    startIcon={followMutation?.isPending ? <CircularProgress color='primary' size={20} /> : null}
+                    disabled={followMutation?.isPending}
                 >
-                    Follow
+                    {blog?.user?.is_following ? 'Unfollow' : 'Follow'}
                 </Button>
             </Stack>
             <Stack

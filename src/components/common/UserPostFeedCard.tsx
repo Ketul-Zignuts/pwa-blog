@@ -100,7 +100,7 @@ const UserPostFeedCard = ({ item }: PostFeedProps) => {
           alt={item.title}
           sx={{
             width: '100%',
-            aspectRatio: '16/9',
+            aspectRatio: '16/10',
             objectFit: 'cover'
           }}
         />
