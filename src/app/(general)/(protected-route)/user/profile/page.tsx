@@ -29,7 +29,7 @@ const ProfilePage = async () => {
   return (
     <>
       <HomeNavbar />
-      <Container maxWidth='lg'>
+      <Container maxWidth='lg' sx={{my:10}}>
         <UserProfile tabContentList={tabContentList()} fromUser={true} editable={true} />
       </Container>
     </>

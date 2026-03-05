@@ -168,9 +168,7 @@ export default function HomeNavbar({ showBoxShadow = false }: HomeNavbarProps) {
                     color: isLightMode
                         ? theme.palette.text.primary
                         : 'inherit',
-                    boxShadow: isLightMode || showBoxShadow
-                        ? `0px 2px 6px ${theme.palette.primary.main}33`
-                        : 'none'
+                    boxShadow: `0px 2px 6px ${theme.palette.primary.main}33`
                 })}
             >
                 <Toolbar>
@@ -217,7 +215,7 @@ export default function HomeNavbar({ showBoxShadow = false }: HomeNavbarProps) {
                     <Box sx={{ display:'flex' }}>
                         <Box sx={{ display: { xs: 'none', sm: 'flex' }, alignItems: 'center', gap: 1 }}>
                             <Button color="inherit" onClick={redirectToHome} sx={{display:{sm:'none',md:'block'}}}>Home</Button>
-                            <Button color="inherit" sx={{display:{sm:'none',md:'block'}}}>Filter</Button>
+                            <Button color="inherit" sx={{display:{sm:'none',md:'block'}}} onClick={() => router.push('/blog/filter')}>Filter</Button>
                             {!isPostFormPage && (<Button color="primary" variant='contained' onClick={() => router.push('/blog/post')}>POST</Button>)}
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -288,7 +286,7 @@ export default function HomeNavbar({ showBoxShadow = false }: HomeNavbarProps) {
                                                         </div>
                                                     </div>
                                                     <Divider className='mlb-1' />
-                                                    <MenuItem className='gap-3' onClick={e => handleDropdownClose(e, '/profile')}>
+                                                    <MenuItem className='gap-3' onClick={e => handleDropdownClose(e, '/user/profile')}>
                                                         <i className='ri-user-3-line' />
                                                         <Typography color='text.primary'>My Profile</Typography>
                                                     </MenuItem>

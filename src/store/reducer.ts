@@ -1,34 +1,45 @@
 import { combineReducers } from "redux";
 import { persistReducer } from "redux-persist";
 import authReducer from "@/store/slices/authSlice";
-import homeReducer from "@/store/slices/homeSlice"
-import storage from '@/lib/storage';
+import homeReducer from "@/store/slices/homeSlice";
+import filterReducer from "@/store/slices/filterSlice";
+import storage from "@/lib/storage";
 
 const reducer = combineReducers({
   auth: persistReducer(
     {
       key: "auth",
-      storage: storage,
+      storage,
       keyPrefix: "blog-master-",
       debug: false,
       whitelist: ["user", "token", "isAdminLoggedIn"],
       timeout: 20000,
     },
-    authReducer,
+    authReducer
   ),
+
   home: persistReducer(
     {
       key: "home",
-      storage: storage,
+      storage,
       keyPrefix: "blog-master-",
       debug: false,
       whitelist: [],
       timeout: 20000,
     },
-    homeReducer,
+    homeReducer
+  ),
+  filter: persistReducer(
+    {
+      key: "filter",
+      storage,
+      keyPrefix: "blog-master-",
+      debug: false,
+      whitelist: [],
+      timeout: 20000,
+    },
+    filterReducer
   ),
 });
-
-export type RootState = ReturnType<typeof reducer>;
 
 export default reducer;

@@ -25,6 +25,7 @@ import { adminPostDeleteAction } from '@/constants/api/admin/posts'
 import { useRouter } from 'next/navigation'
 import { PostDataType } from '@/types/postTypes'
 import { myPostListAction } from '@/constants/api/profile'
+import { NoPostIllustration } from '@/components/common/NoPostIllustration'
 
 const MyPostTable = () => {
   const { confirm } = useConfirm()

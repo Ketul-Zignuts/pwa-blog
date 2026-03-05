@@ -27,6 +27,7 @@ import { PostDataType } from '@/types/postTypes'
 import { myPostListAction } from '@/constants/api/profile'
 import dayjs from 'dayjs'
 import { useAppSelector } from '@/store'
+import { NoPostIllustration } from '@/components/common/NoPostIllustration'
 
 const MyPostTable = () => {
   const { confirm } = useConfirm()
@@ -140,7 +141,7 @@ const MyPostTable = () => {
     {
       field: 'category',
       headerName: 'Category',
-      minWidth: 270,
+      minWidth: 150,
       sortable: true,
       filterable: true,
       renderCell: ({ row }: GridRenderCellParams) => {
@@ -187,7 +188,7 @@ const MyPostTable = () => {
     {
       field: 'created_at',
       headerName: 'Created At',
-      minWidth: 250,
+      minWidth: 180,
       sortable: true,
       filterable: true,
       renderCell: ({ row }: GridRenderCellParams) => {
@@ -201,7 +202,7 @@ const MyPostTable = () => {
     {
       field: 'status',
       headerName: 'Status',
-      minWidth: 180,
+      minWidth: 120,
       sortable: true,
       filterable: true,
       renderCell: ({ value }: GridRenderCellParams) => {
@@ -233,7 +234,7 @@ const MyPostTable = () => {
       disableColumnMenu: true,
       align: 'center',
       headerAlign: 'center',
-      minWidth: 120,
+      minWidth: 156,
       getActions: (params: GridRowParams) => [
         <GridActionsCellItem
           key="edit"
@@ -294,6 +295,7 @@ const MyPostTable = () => {
       addAction={addAction}
       searchValue={search}
       onSearchChange={handleSearchChange}
+      customNoRowsOverlay={<NoPostIllustration />}
     />
   )
 }

@@ -6,10 +6,12 @@ import {
   GridRowId,
   type GridValidRowModel,
   type GridPaginationModel,
+  GridOverlay,
 } from '@mui/x-data-grid'
 import { ReactNode } from 'react'
-import { Box, Stack, Toolbar } from '@mui/material'
+import { Box, Stack, Toolbar, Typography } from '@mui/material'
 import { DebouncedInput } from '@/components/common/DebouncedInput'
+import { DataGridNoSearchIllustration } from './DataGridNoSearchIllustration'
 
 interface DataGridTableProps<T extends GridValidRowModel> {
   columns: GridColDef<T>[]
@@ -24,6 +26,7 @@ interface DataGridTableProps<T extends GridValidRowModel> {
   searchValue?: string
   onSearchChange?: (value: string) => void
   rowHeight?: number
+  customNoRowsOverlay?: ReactNode
 }
 
 export function DataGridTable<T extends GridValidRowModel>({
@@ -38,8 +41,17 @@ export function DataGridTable<T extends GridValidRowModel>({
   getRowId,
   searchValue,
   onSearchChange,
-  rowHeight = 52
+  rowHeight = 52,
+  customNoRowsOverlay
 }: DataGridTableProps<T>) {
+
+  const DefaultNoRowsOverlay = () => (
+    <GridOverlay>
+      <Stack alignItems="center" justifyContent="center" spacing={1}>
+        <Typography color="text.secondary">No data found</Typography>
+      </Stack>
+    </GridOverlay>
+  )
 
   const CustomToolbar = () => (
     <Toolbar aria-label="Table toolbar">
@@ -86,6 +98,7 @@ export function DataGridTable<T extends GridValidRowModel>({
         getRowId={getRowId}
         slots={{
           toolbar: CustomToolbar,
+          noRowsOverlay: searchValue ? () => <DataGridNoSearchIllustration/> : customNoRowsOverlay ? () => <>{customNoRowsOverlay}</> : DefaultNoRowsOverlay,
         }}
         showToolbar
         sx={{

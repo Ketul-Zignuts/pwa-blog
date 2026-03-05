@@ -118,7 +118,7 @@ const PostForm = ({ data, fromEdit }: PostFormTypeProps) => {
     return (
         <>
             <HomeNavbar />
-            <Container maxWidth="lg" sx={{ mb: 10 }}>
+            <Container maxWidth="lg" sx={{ mb: 10,mt:3 }}>
                 <Grid container spacing={0}>
                     <Grid item xs={12} sx={{ mt: 2 }}>
                         <AppBreadcrumbs path={path} />

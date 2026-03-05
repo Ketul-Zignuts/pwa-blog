@@ -14,3 +14,5 @@ export const rateReviewUpdateAction = (formData:any) => putRequest('/general/rev
 export const rateReviewCreateAction = (formData:any) => postRequest('/general/review',formData);
 
 export const followAuthorAction = (formData:any) => postRequest('/general/posts/follow',formData);
+
+export const getFilteredBlogAction = (params:any) => getRequest('/public/blog/filter',params);
