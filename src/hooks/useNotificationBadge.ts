@@ -20,10 +20,10 @@ export function useNotificationBadge(uid: string) {
 
   const badgeQuery = useQuery<BadgeResponse>({
     queryKey: ['notifications-count',uid],
-    queryFn: () => getNotificationCount({}),
+    queryFn: getNotificationCount,
     enabled: !!uid,
-    refetchInterval: 30_000,
-    staleTime: 10_000
+    staleTime: 1000 * 60 * 5, // 5 minutes cache
+    refetchOnWindowFocus: false // prevent multiple calls on tab focus
   })
 
   useEffect(() => {
@@ -40,10 +40,13 @@ export function useNotificationBadge(uid: string) {
           filter: `recipient_uid=eq.${uid}`
         },
         () => {
-          queryClient.setQueryData(['notifications-count', uid], (old: BadgeResponse | undefined) => ({
-            ...old!,
-            unreadCount: (old?.unreadCount || 0) + 1
-          }))
+          queryClient.setQueryData<BadgeResponse>(
+            ['notifications-count', uid],
+            (old) => ({
+              success: true,
+              unreadCount: (old?.unreadCount ?? 0) + 1
+            })
+          )
         }
       )
       .on(
@@ -52,13 +55,18 @@ export function useNotificationBadge(uid: string) {
           event: 'UPDATE',
           schema: 'public',
           table: 'notifications',
-          filter: `recipient_uid=eq.${uid},is_read=eq.true`
+          filter: `recipient_uid=eq.${uid}`
         },
-        () => {
-          queryClient.setQueryData(['notifications-count', uid], (old: BadgeResponse | undefined) => ({
-            ...old!,
-            unreadCount: Math.max(0, (old?.unreadCount || 0) - 1)
-          }))
+        (payload) => {
+          if (payload.new.is_read) {
+            queryClient.setQueryData<BadgeResponse>(
+              ['notifications-count', uid],
+              (old) => ({
+                success: true,
+                unreadCount: Math.max(0, (old?.unreadCount ?? 0) - 1)
+              })
+            )
+          }
         }
       )
       .subscribe()
@@ -66,10 +74,10 @@ export function useNotificationBadge(uid: string) {
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [uid, queryClient, supabase])
+  }, [uid]) // ✅ only runs when UID changes
 
   return {
-    unreadCount: badgeQuery.data?.unreadCount || 0,
+    unreadCount: badgeQuery.data?.unreadCount ?? 0,
     isLoading: badgeQuery.isPending
   }
 }

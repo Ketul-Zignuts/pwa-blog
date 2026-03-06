@@ -298,7 +298,7 @@ const NotificationDropDown = ({ anchorRef, open, onClose, notificationsQuery }: 
                         sx: { zIndex: 15000 }
                       }
                     }}>
-                      <IconButton size='small' onClick={readAllNotifications} color='info' >
+                      <IconButton size='small' onClick={(e) => readAllNotifications(e)} color='info' >
                         <i className={readAll ? 'ri-mail-line' : 'ri-mail-open-line'} />
                       </IconButton>
                     </Tooltip>

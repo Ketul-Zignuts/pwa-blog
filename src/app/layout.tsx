@@ -11,6 +11,7 @@ import '@/app/globals.css'
 import '@assets/iconify-icons/generated-icons.css'
 import Providers from '@/components/Providers'
   import { ToastContainer } from 'react-toastify';
+import FirebaseNotification from '@/components/notifications/FirebaseNotification'
 
 
 export const metadata = {
@@ -27,6 +28,7 @@ const RootLayout = ({ children }: ChildrenType) => {
     <html id='__next' lang='en' dir={direction}>
       <body className='flex is-full min-bs-full flex-auto flex-col'>
         <Providers direction='ltr'>
+          <FirebaseNotification />
           {children}
           <ToastContainer />
         </Providers>

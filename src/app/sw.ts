@@ -1,8 +1,14 @@
 /// <reference lib="webworker" />
 
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js')
+importScripts('https://www.gstatic.com/firebasejs/10.13.2/firebase-messaging-compat.js')
+
+declare const firebase: any
+
 import { Serwist } from 'serwist'
 import { CacheFirst, NetworkFirst } from 'serwist'
 import type { PrecacheEntry } from 'serwist'
+import type { MessagePayload } from 'firebase/messaging'
 
 declare global {
   interface WorkerGlobalScope {
@@ -12,10 +18,54 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope
 
+/* ---------------- FIREBASE SETUP ---------------- */
+
+firebase.initializeApp({
+  apiKey: "AIzaSyC17i-QEqhO0H62zVjjTseJzYKZUY-vsmU",
+  projectId: "pwa-blog-d6518",
+  messagingSenderId: "544060156952",
+  appId: "1:544060156952:web:d4b86a6ab51774755ca76d"
+})
+
+const messaging = firebase.messaging()
+
+/* -------- Background Push Notification -------- */
+
+messaging.onBackgroundMessage((payload: MessagePayload) => {
+  const { title = "Notification", body = "" } = payload.notification ?? {}
+
+  self.registration.showNotification(title, {
+    body,
+    icon: "/icon-192x192.png"
+  })
+})
+
+/* -------- Notification Click Handling -------- */
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close()
+
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((clients) => {
+      for (const client of clients) {
+        if ("focus" in client) {
+          return client.focus()
+        }
+      }
+
+      if (self.clients.openWindow) {
+        return self.clients.openWindow("/")
+      }
+    })
+  )
+})
+
+/* ---------------- SERWIST CACHE ---------------- */
+
 const serwist = new Serwist({
   precacheEntries: [
     ...(self.__SW_MANIFEST || []),
-    { url: '/offline', revision: null },
+    { url: '/offline', revision: null }
   ],
 
   skipWaiting: true,
@@ -26,40 +76,40 @@ const serwist = new Serwist({
       matcher: ({ request }) => request.mode === 'navigate',
       handler: new NetworkFirst({
         cacheName: 'pages',
-        networkTimeoutSeconds: 3,
-      }),
+        networkTimeoutSeconds: 3
+      })
     },
 
     {
-      matcher: /vsooosecrets\.supabase\.co\/storage\/v1\/object\/public/,
+      matcher: /vsooewqcihdkorkhfyvb\.supabase\.co\/storage\/v1\/object\/public/,
       handler: new CacheFirst({
-        cacheName: 'supabase-images',
-      }),
+        cacheName: 'supabase-images'
+      })
     },
 
     {
       matcher: /^https?:\/\/.*\/api/,
       handler: new NetworkFirst({
-        cacheName: 'api-cache',
-      }),
+        cacheName: 'api-cache'
+      })
     },
 
     {
       matcher: /\.(?:png|jpg|jpeg|svg|ico|webp)$/,
       handler: new CacheFirst({
-        cacheName: 'static-images',
-      }),
-    },
+        cacheName: 'static-images'
+      })
+    }
   ],
 
   fallbacks: {
     entries: [
       {
         url: '/offline',
-        matcher: ({ request }) => request.mode === 'navigate',
-      },
-    ],
-  },
+        matcher: ({ request }) => request.mode === 'navigate'
+      }
+    ]
+  }
 })
 
 serwist.addEventListeners()
