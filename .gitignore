@@ -5,6 +5,8 @@
 /.pnp
 .pnp.*
 .pnp.js
+public/sw.js
+/public/sw.js.map
 
 # Yarn
 .yarn/*

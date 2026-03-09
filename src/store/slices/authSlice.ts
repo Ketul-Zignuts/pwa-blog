@@ -58,7 +58,7 @@ export const authSlice = createSlice({
       state.authUserLoading = false
     },
 
-    updateUser: (state, action: PayloadAction<UserDetailProps>) => {
+    updateUser: (state, action: PayloadAction<any>) => {
       state.user = action.payload
     }
   }
