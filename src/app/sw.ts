@@ -1,7 +1,6 @@
 /// <reference lib="webworker" />
 
-import { Serwist } from 'serwist'
-import { CacheFirst, NetworkFirst } from 'serwist'
+import { Serwist, CacheFirst, NetworkFirst } from 'serwist'
 import type { PrecacheEntry } from 'serwist'
 
 declare global {

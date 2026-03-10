@@ -15,6 +15,8 @@ const ProfileTab = dynamic(() => import('@/components/user-profile/profile/index
 const ChangePassword = dynamic(() => import('@/components/user-profile/change-password/index'))
 const MyPostList = dynamic(() => import('@/components/user-profile/my-post-list/index'))
 
+const validTabList = ['profile','my-posts', 'change-password']
+
 // Vars
 const tabContentList = (data?: Data): { [key: string]: ReactElement } => ({
   profile: <ProfileTab />,
@@ -24,7 +26,7 @@ const tabContentList = (data?: Data): { [key: string]: ReactElement } => ({
 
 const ProfilePage = async () => {
 
-  return <UserProfile tabContentList={tabContentList()} fromUser={false} editable={true} />
+  return <UserProfile tabContentList={tabContentList()} fromUser={false} editable={true} validTabList={validTabList} />
 }
 
 export default ProfilePage
