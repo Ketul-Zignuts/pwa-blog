@@ -246,7 +246,7 @@ const MyPostTable = () => {
             </Tooltip>
           }
           label="Edit"
-          onClick={() => router.push(isAdmin ? `/admin/posts/${params.id}` : `/blog/posts/${params.id}`)}
+          onClick={() => router.push(isAdmin ? `/admin/posts/${params.id}` : `/blog/post/${params.id}`)}
           disabled={deleteMutation.isPending}
         />,
         <GridActionsCellItem

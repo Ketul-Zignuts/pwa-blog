@@ -1,4 +1,4 @@
-import PostForm from '@/views/general/blog/post/PostForm'
+import PostEditView from '@/views/general/blog/post/PostEditView'
 import { Metadata } from 'next'
 import React from 'react'
 
@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 }
 
 const Page = () => {
-  return (<PostForm />)
+  return (<PostEditView />)
 }
 
 export default Page

@@ -183,13 +183,20 @@ export async function PUT(
       }
 
       // validate after parsing
-      payload = await addUpdatePostSchema.validate(payload, {
+      payload = await addUpdatePostSchema.validate({
+        ...payload,
+        user_id: uid
+      }, {
         abortEarly: false,
         stripUnknown: true
       })
     } else {
       const body = await req.json()
-      payload = await addUpdatePostSchema.validate(body, {
+      const fullPayloadBody = {
+        ...body,
+        user_id: uid
+      }
+      payload = await addUpdatePostSchema.validate(fullPayloadBody, {
         abortEarly: false,
         stripUnknown: true
       })
@@ -247,6 +254,7 @@ export async function PUT(
     }
 
     const updateData: any = {
+      user_id: existingPost.user_id,
       category_id: category_id ?? existingPost.category_id,
       title: title?.trim() ?? existingPost.title,
       slug: finalSlug,
