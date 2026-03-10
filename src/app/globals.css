@@ -133,3 +133,33 @@ code {
   background-color: rgb(var(--mui-palette-info-mainChannel) / 0.08);
   border: 0;
 }
+
+/**
+ * Global styles for ControlledZoom with "transparent-zoom-overlay" class
+ */
+
+/* 1. Target the overlay div inside your custom class */
+.transparent-zoom-overlay [data-rmiz-modal-overlay="visible"] {
+  /* Translucent black layer - adjust opacity (0.7) as needed */
+  background-color: rgba(0, 0, 0, 0.1) !important;
+  
+  /* The blur effect - requires vendor prefixes for compatibility */
+  -webkit-backdrop-filter: blur(10px) !important;
+  backdrop-filter: blur(10px) !important;
+
+  /* Ensures the overlay fills the screen without scrollbars flashing */
+  position: fixed !important;
+  inset: 0 !important;
+}
+
+/* 2. Style the dialog element itself to be transparent */
+dialog.transparent-zoom-overlay {
+  background-color: transparent !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+dialog.transparent-zoom-overlay img {
+  border-radius: 8px !important;
+}

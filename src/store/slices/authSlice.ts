@@ -11,6 +11,7 @@ export type UserDetailProps = {
   phoneNumber: string
   photoURL: string
   uid: string
+  provider?:string
 }
 
 // Auth State Type

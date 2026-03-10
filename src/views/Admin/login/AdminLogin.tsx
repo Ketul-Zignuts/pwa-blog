@@ -192,38 +192,6 @@ const AdminLogin = ({ mode }: { mode: Mode }) => {
             <Button fullWidth variant='contained' type='button' disabled={isPending} onClick={handleSubmit(onSubmit)} startIcon={isPending ? <CircularProgress size={20} color='warning' /> : null}>
               Log In
             </Button>
-            <Divider className='gap-3'>or</Divider>
-            <Button
-              variant="contained"
-              startIcon={<i className="ri-google-fill text-base" style={{ color: '#131313' }} />}
-              sx={{
-                backgroundColor: '#FFF',
-                color: '#131313',
-                borderRadius: '4px',
-                height: '40px',
-                padding: '0 24px',
-                textTransform: 'none',
-                fontWeight: 500,
-                fontSize: '14px',
-                fontFamily: '"Roboto", "Segoe UI", sans-serif',
-                boxShadow: '0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15)',
-                '&:hover': {
-                  backgroundColor: '#FFF',
-                  boxShadow: '0 1px 3px 0 rgba(60,64,67,.3), 0 2px 6px 2px rgba(60,64,67,.15)',
-                  transform: 'translateY(-1px)'
-                },
-                '&:active': {
-                  boxShadow: '0 1px 2px 0 rgba(60,64,67,.3), 0 1px 3px 1px rgba(60,64,67,.15)',
-                  transform: 'translateY(0)'
-                },
-                '& .MuiTouchRipple-root': {
-                  color: 'rgba(255,255,255,.3)'
-                }
-              }}
-              disableRipple
-            >
-              Log in with Google
-            </Button>
           </Box>
         </div>
       </div>

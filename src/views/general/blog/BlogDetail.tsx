@@ -13,6 +13,7 @@ import BlogMorePost from '@/components/blog-detail/BlogMorePost'
 import BlogDetailPageSkeleton from '@/components/skeleton/BloDetailPageSkeleton'
 import BlogReview from '@/components/blog-detail/BlogReview'
 import ScrollToTop from '@/@core/components/scroll-to-top'
+import 'react-medium-image-zoom/dist/styles.css' // Required styles
 
 type Props = {
   slug: string

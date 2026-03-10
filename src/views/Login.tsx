@@ -37,6 +37,7 @@ import { useAppDispatch } from '@/store'
 import { setAuthLoading, setAuthUser } from '@/store/slices/authSlice'
 import { toast } from 'react-toastify'
 import { loginAction } from '@/constants/api/auth'
+import { signInWithGoogle } from '@/lib/supabase-client'
 
 // Util Imports
 type LoginProps = {
@@ -105,6 +106,14 @@ const Login = ({ mode }: { mode: Mode }) => {
       queryClient.invalidateQueries({ queryKey: ['login'] })
     }
   })
+
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithGoogle()
+    } catch (err) {
+      toast.error('Google login failed')
+    }
+  }
 
   const onSubmit = async (data: LoginProps) => {
     await mutate(data);
@@ -185,6 +194,7 @@ const Login = ({ mode }: { mode: Mode }) => {
               <Button
                 variant="contained"
                 startIcon={<i className="ri-google-fill text-base" style={{ color: '#131313' }} />}
+                onClick={handleGoogleLogin}
                 sx={{
                   backgroundColor: '#FFF',
                   color: '#131313',
@@ -211,7 +221,7 @@ const Login = ({ mode }: { mode: Mode }) => {
                 }}
                 disableRipple
               >
-                Log in with Google
+                Login with Google
               </Button>
 
             </Box>

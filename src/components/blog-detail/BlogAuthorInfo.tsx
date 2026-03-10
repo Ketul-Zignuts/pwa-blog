@@ -46,96 +46,101 @@ const BlogAuthorInfo = ({ blog }: BlogAuthorInfoProps) => {
     return (
         <Box
             sx={{
-                mt: 5,
-                mb: 5,
-                p: 3,
+                mt: { xs: 3, md: 5 },
+                mb: { xs: 3, md: 5 },
+                p: { xs: 2, sm: 3 },
                 borderRadius: 1,
                 bgcolor: 'background.paper',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+                boxShadow: '0 4px 20px rgba(0,0,0,0.08)'
             }}
         >
-            <Stack direction="row" spacing={3} alignItems="center">
+            {/* Top Section: Avatar, Name, and Follow Button */}
+            <Stack 
+                direction={{ xs: 'column', sm: 'row' }} 
+                spacing={{ xs: 2, sm: 3 }} 
+                alignItems={{ xs: 'flex-start', sm: 'center' }}
+            >
                 <Avatar
                     src={blog?.user?.photoURL}
                     alt={blog?.user?.displayName}
-                    sx={{ width: 40, height: 40 }}
+                    sx={{ width: 56, height: 56 }} // Increased slightly for better visibility
                 />
-                <Box flex={1}>
+                
+                <Box sx={{ flex: 1, width: '100%' }}>
                     <Stack
-                        direction={{ xs: 'column', sm: 'row' }}
+                        direction="row"
                         justifyContent="space-between"
-                        alignItems={{ xs: 'flex-start', sm: 'center' }}
-                        spacing={0}
+                        alignItems="center"
+                        spacing={2}
                     >
-                        <Typography variant="h6" fontWeight={600}>
+                        <Typography variant="h6" fontWeight={700} sx={{ lineHeight: 1.2 }}>
                             {blog?.user?.displayName}
                         </Typography>
+                        
+                        {/* Follow Button shows next to name on Mobile to save vertical space */}
+                        <Box sx={{ display: { xs: 'block', sm: 'none' } }}>
+                            <FollowButton blog={blog} followMutation={followMutation} />
+                        </Box>
                     </Stack>
-                    <Stack
-                        direction={{ xs: 'column', sm: 'row' }}
-                        justifyContent="space-between"
-                        alignItems={{ xs: 'flex-start', sm: 'center' }}
-                        spacing={0}
-                    >
-                        <Typography variant="caption">
-                            {blog?.user?.bio}
-                        </Typography>
-                    </Stack>
+                    
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, maxWidth: '600px' }}>
+                        {blog?.user?.bio}
+                    </Typography>
                 </Box>
-                <Button
-                    variant="contained"
-                    size="small"
-                    color='info'
-                    onClick={() => followMutation?.mutate({ following_uid: blog?.user?.uid })}
-                    startIcon={followMutation?.isPending ? <CircularProgress color='primary' size={20} /> : null}
-                    disabled={followMutation?.isPending}
-                >
-                    {blog?.user?.is_following ? 'Unfollow' : 'Follow'}
-                </Button>
+
+                {/* Follow Button shows at the end on Desktop */}
+                <Box sx={{ display: { xs: 'none', sm: 'block' } }}>
+                    <FollowButton blog={blog} followMutation={followMutation} />
+                </Box>
             </Stack>
-            <Stack
-                direction="row"
-                spacing={3}
-                flexDirection={{ xs: 'column', sm: 'row' }}
-                sx={{ mt: 3 }}
+
+            <Box 
+                sx={{ 
+                    mt: 3, 
+                    pt: 2, 
+                    borderTop: '1px solid', 
+                    borderColor: 'divider' 
+                }}
             >
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                    <CalendarTodayIcon fontSize="small" />
-                    <Typography variant="body2">
-                        {publishedDate}
-                    </Typography>
+                <Stack
+                    direction="row"
+                    flexWrap="wrap"
+                    // Small gap on mobile, larger on desktop
+                    gap={{ xs: 1.5, sm: 3 }} 
+                >
+                    <StatItem icon={<CalendarTodayIcon fontSize="inherit" />} label={publishedDate} />
+                    <StatItem icon={<AccessTimeIcon fontSize="inherit" />} label={`${blog?.read_time} min read`} />
+                    <StatItem icon={<VisibilityOutlinedIcon fontSize="inherit" />} label={blog?.views} />
+                    <StatItem icon={<FavoriteBorderIcon fontSize="inherit" />} label={blog?.likes} />
+                    <StatItem icon={<ChatBubbleOutlineIcon fontSize="inherit" />} label={blog?.comments_count} />
                 </Stack>
-
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                    <AccessTimeIcon fontSize="small" />
-                    <Typography variant="body2">
-                        {blog?.read_time} min read
-                    </Typography>
-                </Stack>
-
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                    <VisibilityOutlinedIcon fontSize="small" />
-                    <Typography variant="body2">
-                        {blog?.views}
-                    </Typography>
-                </Stack>
-
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                    <FavoriteBorderIcon fontSize="small" />
-                    <Typography variant="body2">
-                        {blog?.likes}
-                    </Typography>
-                </Stack>
-
-                <Stack direction="row" spacing={0.5} alignItems="center">
-                    <ChatBubbleOutlineIcon fontSize="small" />
-                    <Typography variant="body2">
-                        {blog?.comments_count}
-                    </Typography>
-                </Stack>
-            </Stack>
+            </Box>
         </Box>
     )
 }
+
+// Sub-components for cleaner code
+const FollowButton = ({ blog, followMutation }: any) => (
+    <Button
+        variant={blog?.user?.is_following ? "outlined" : "contained"}
+        size="small"
+        color='info'
+        onClick={() => followMutation?.mutate({ following_uid: blog?.user?.uid })}
+        startIcon={followMutation?.isPending ? <CircularProgress color='inherit' size={16} /> : null}
+        disabled={followMutation?.isPending}
+        sx={{ borderRadius: '4px', px: 3, textTransform: 'none', fontWeight: 600 }}
+    >
+        {blog?.user?.is_following ? 'Unfollow' : 'Follow'}
+    </Button>
+)
+
+const StatItem = ({ icon, label }: { icon: React.ReactNode, label: string | number | undefined }) => (
+    <Stack direction="row" spacing={0.7} alignItems="center" sx={{ color: 'text.secondary' }}>
+        <Box sx={{ display: 'flex', fontSize: '1.1rem' }}>{icon}</Box>
+        <Typography variant="caption" sx={{ fontWeight: 500, whiteSpace: 'nowrap' }}>
+            {label}
+        </Typography>
+    </Stack>
+)
 
 export default BlogAuthorInfo

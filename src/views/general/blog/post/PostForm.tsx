@@ -51,7 +51,6 @@ type PostFormTypeProps = {
 
 
 const PostForm = ({ data, fromEdit }: PostFormTypeProps) => {
-    const queryClient = useQueryClient()
     const router = useRouter();
 
     const path = [
@@ -81,13 +80,11 @@ const PostForm = ({ data, fromEdit }: PostFormTypeProps) => {
         onSuccess: () => {
             router.push('/home')
             toast.success(`Post ${data?.id ? 'updated' : 'created'} successfully!`);
+            router.push('/user/profile?tab=my-posts')
         },
         onError: (err: any) => {
             const message = err?.response?.data?.message || 'Something went wrong!';
             toast.error(message);
-        },
-        onSettled: () => {
-            // queryClient.invalidateQueries({ queryKey: ['admin-posts'] });
         }
     });
 
