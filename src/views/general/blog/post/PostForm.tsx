@@ -78,7 +78,6 @@ const PostForm = ({ data, fromEdit }: PostFormTypeProps) => {
             return apiCall(data);
         },
         onSuccess: () => {
-            router.push('/home')
             toast.success(`Post ${data?.id ? 'updated' : 'created'} successfully!`);
             router.push('/user/profile?tab=my-posts')
         },

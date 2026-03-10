@@ -25,7 +25,6 @@ type Props = {
 const UserProfile = ({ tabContentList, fromUser, editable, validTabList }: Props) => {
   const searchParams = useSearchParams()
   const tabFromUrl = searchParams.get('tab') || 'profile'
-  console.log('tabFromUrl: ', tabFromUrl);
   const [activeTab, setActiveTab] = useState('profile')
 
   const handleChange = (event: SyntheticEvent, value: string) => {

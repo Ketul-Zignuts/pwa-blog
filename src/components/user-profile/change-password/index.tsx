@@ -2,18 +2,14 @@
 import CustomTextInput from '@/components/form/CustomTextInput'
 import { changePassWordAction } from '@/constants/api/profile'
 import { changePasswordSchema } from '@/constants/schema/general/profileSchema'
+import { useAppSelector } from '@/store'
 import { yupResolver } from '@hookform/resolvers/yup'
 import { Box, Button, Card, CardContent, CardHeader, CircularProgress, Grid, Typography } from '@mui/material'
 import { useMutation } from '@tanstack/react-query'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-toastify'
 
-type ChangePassWordProps = {
-  currentPassword: string
-  newPassword: string
-  confirmPassword: string
-}
 type ChangePassWordStateProps = {
   currentPassword: boolean
   newPassword: boolean
@@ -21,6 +17,8 @@ type ChangePassWordStateProps = {
 }
 
 const ChangePassword = () => {
+  const user = useAppSelector((state)=>state.auth.user);
+
   const [showPassword, setShowPassWord] = useState<ChangePassWordStateProps>({
     currentPassword: false,
     newPassword: false,
@@ -30,12 +28,14 @@ const ChangePassword = () => {
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors },
   } = useForm({
     resolver: yupResolver(changePasswordSchema),
     reValidateMode: 'onChange',
     mode: 'all',
     defaultValues: {
+      provider:'email',
       currentPassword: '',
       newPassword: '',
       confirmPassword: ''
@@ -57,7 +57,7 @@ const ChangePassword = () => {
     },
   })
 
-  const onSubmit = async (data: ChangePassWordProps) => {
+  const onSubmit = async (data: any) => {
     await mutate(data);
   };
 
@@ -67,6 +67,11 @@ const ChangePassword = () => {
       [field]: !prev[field]
     }))
   }
+
+  useEffect(() => {
+    if(user?.provider) setValue('provider',user?.provider, { shouldValidate:true })
+  }, [user])
+  
 
   return (
     <Card>
@@ -80,6 +85,7 @@ const ChangePassword = () => {
       />
       <CardContent>
         <Grid container spacing={5}>
+        {user?.provider !== 'google' && (
           <Grid item xs={12}>
             <CustomTextInput
               id='currentPassword'
@@ -99,6 +105,7 @@ const ChangePassword = () => {
               }}
             />
           </Grid>
+        )}
           <Grid item xs={12}>
             <CustomTextInput
               id='newPassword'

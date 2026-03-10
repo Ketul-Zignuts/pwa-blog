@@ -85,7 +85,7 @@ const query = useInfiniteQuery<NotificationPage, Error>({
     return () => {
       supabase.removeChannel(channel)
     }
-  }, [uid, queryClient])
+  }, [uid])
 
   return query
 }

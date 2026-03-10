@@ -387,10 +387,14 @@ const NotificationDropDown = ({ anchorRef, open, onClose, notificationsQuery }: 
                   )}
                 </ScrollWrapper>
 
-                <Divider />
-                <div className='p-4'>
-                  <Button fullWidth variant='contained' size='small' color='error' onClick={(e) => handleDeleteAllNotification(e)}>Delete All Notifications</Button>
-                </div>
+                {hasNotifications && (
+                  <>
+                    <Divider />
+                    <div className='p-4'>
+                      <Button fullWidth variant='contained' size='small' color='error' onClick={(e) => handleDeleteAllNotification(e)}>Delete All Notifications</Button>
+                    </div>
+                  </>
+                )}
               </div>
             </ClickAwayListener>
           </Paper>

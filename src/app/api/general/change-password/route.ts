@@ -12,11 +12,20 @@ export async function PUT(req: NextRequest) {
       )
     }
 
-    const { currentPassword, newPassword } = await req.json()
+    const { currentPassword, newPassword, provider } = await req.json()
 
-    if (!currentPassword || !newPassword) {
+    // Email users must provide currentPassword and newPassword
+    if (provider === 'email' && (!currentPassword || !newPassword)) {
       return NextResponse.json(
         { success: false, message: 'All fields are required' },
+        { status: 400 }
+      )
+    }
+
+    // Other providers only need newPassword
+    if (!newPassword) {
+      return NextResponse.json(
+        { success: false, message: 'New password is required' },
         { status: 400 }
       )
     }
@@ -30,17 +39,20 @@ export async function PUT(req: NextRequest) {
 
     const email = userData.user.email
 
-    const { error: loginError } =
-      await adminSupabase.auth.signInWithPassword({
-        email,
-        password: currentPassword
-      })
+    // Only verify current password if provider is email
+    if (provider === 'email') {
+      const { error: loginError } =
+        await adminSupabase.auth.signInWithPassword({
+          email,
+          password: currentPassword!
+        })
 
-    if (loginError) {
-      return NextResponse.json(
-        { success: false, message: 'Current password is incorrect' },
-        { status: 403 }
-      )
+      if (loginError) {
+        return NextResponse.json(
+          { success: false, message: 'Current password is incorrect' },
+          { status: 403 }
+        )
+      }
     }
 
     const { error: updateError } =
