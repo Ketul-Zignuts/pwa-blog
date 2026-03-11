@@ -5,7 +5,6 @@ import AppBar from '@mui/material/AppBar'
 import Box from '@mui/material/Box'
 import Toolbar from '@mui/material/Toolbar'
 import IconButton from '@mui/material/IconButton'
-import InputBase from '@mui/material/InputBase'
 import Badge from '@mui/material/Badge'
 import MenuItem from '@mui/material/MenuItem'
 import Drawer from '@mui/material/Drawer'
@@ -15,7 +14,6 @@ import ListItemIcon from '@mui/material/ListItemIcon'
 import ListItemText from '@mui/material/ListItemText'
 import Divider from '@mui/material/Divider'
 import MenuIcon from '@mui/icons-material/Menu'
-import SearchIcon from '@mui/icons-material/Search'
 import AccountCircle from '@mui/icons-material/AccountCircle'
 import MailIcon from '@mui/icons-material/Mail'
 import NotificationsIcon from '@mui/icons-material/Notifications'
@@ -32,6 +30,7 @@ import { toast } from 'react-toastify'
 import NotificationDropDown from './NotificationDropDown'
 import { useNotifications } from '@/hooks/useNotifications'
 import { useNotificationBadge } from '@/hooks/useNotificationBadge'
+import BlogSearchInput from '@/components/common/BlogSearchInput'
 
 const BadgeContentSpan = styled('span')({
     width: 8,
@@ -41,52 +40,6 @@ const BadgeContentSpan = styled('span')({
     backgroundColor: 'var(--mui-palette-success-main)',
     boxShadow: '0 0 0 2px var(--mui-palette-background-paper)'
 })
-
-const Search = styled('div')(({ theme }) => ({
-    position: 'relative',
-    borderRadius: theme.shape.borderRadius,
-    backgroundColor:
-        theme.palette.mode === 'light'
-            ? alpha(theme.palette.common.black, 0.05)
-            : alpha(theme.palette.common.white, 0.15),
-    '&:hover': {
-        backgroundColor:
-            theme.palette.mode === 'light'
-                ? alpha(theme.palette.common.black, 0.1)
-                : alpha(theme.palette.common.white, 0.25)
-    },
-    marginRight: theme.spacing(2),
-    marginLeft: 0,
-    width: '100%',
-    [theme.breakpoints.up('sm')]: {
-        marginLeft: theme.spacing(3),
-        width: 'auto'
-    }
-}))
-
-const SearchIconWrapper = styled('div')(({ theme }) => ({
-    padding: theme.spacing(0, 2),
-    height: '100%',
-    position: 'absolute',
-    pointerEvents: 'none',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    color: theme.palette.text.secondary
-}))
-
-const StyledInputBase = styled(InputBase)(({ theme }) => ({
-    color: theme.palette.text.primary,
-    '& .MuiInputBase-input': {
-        padding: theme.spacing(1, 1, 1, 0),
-        paddingLeft: `calc(1em + ${theme.spacing(4)})`,
-        transition: theme.transitions.create('width'),
-        width: '100%',
-        [theme.breakpoints.up('md')]: {
-            width: '20ch'
-        }
-    }
-}))
 
 type HomeNavbarProps = {
     showBoxShadow?: boolean
@@ -197,16 +150,8 @@ export default function HomeNavbar({ showBoxShadow = false }: HomeNavbarProps) {
                         {themeConfig.templateName}
                     </Typography>
 
-                    <Box sx={{display:{sm:'none',xs:'none',md:'block'}}}>
-                        <Search>
-                        <SearchIconWrapper>
-                            <SearchIcon />
-                        </SearchIconWrapper>
-                        <StyledInputBase
-                            placeholder='Search…'
-                            inputProps={{ 'aria-label': 'search' }}
-                        />
-                    </Search>
+                    <Box sx={{display:{sm:'none',xs:'none',md:'block'},ml:3}}>
+                        <BlogSearchInput />
                     </Box>
 
                     <Box sx={{ flexGrow: 1 }} />

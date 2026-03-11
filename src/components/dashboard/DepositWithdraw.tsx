@@ -9,52 +9,22 @@ import Grid from '@mui/material/Grid'
 import Skeleton from '@mui/material/Skeleton'
 import Avatar from '@mui/material/Avatar'
 
-// Component Imports
-import Link from '@components/Link'
-
 // API
 import { topActivityAction } from '@/constants/api/admin/dashboard'
 import { useQuery } from '@tanstack/react-query'
 import { Rating } from '@mui/material'
 import { useSettings } from '@/@core/hooks/useSettings'
+import { getCommonScrollbarStyle } from '@/utils/Utils'
 
 const DepositWithdraw = () => {
   const { settings } = useSettings();
   const isDarkMode = settings?.mode === 'dark';
+  const scrollBarStyle = getCommonScrollbarStyle(isDarkMode)
 
   const { data: topActivityData, isLoading } = useQuery({
     queryKey: ['dashboard-activity'],
     queryFn: () => topActivityAction()
   })
-
-  const commonStyle = {
-    scrollBarStyle: {
-      scrollbarWidth: 'thin',
-      scrollbarColor: isDarkMode
-        ? 'rgba(255,255,255,0.2) transparent'
-        : 'rgba(0,0,0,0.2) transparent',
-
-      /* Chrome, Edge, Safari */
-      '&::-webkit-scrollbar': {
-        width: '6px'
-      },
-      '&::-webkit-scrollbar-track': {
-        background: 'transparent'
-      },
-      '&::-webkit-scrollbar-thumb': {
-        backgroundColor: isDarkMode
-          ? 'rgba(255,255,255,0.2)'
-          : 'rgba(0,0,0,0.2)',
-        borderRadius: '20px',
-        transition: 'background-color 0.2s ease'
-      },
-      '&::-webkit-scrollbar-thumb:hover': {
-        backgroundColor: isDarkMode
-          ? 'rgba(255,255,255,0.35)'
-          : 'rgba(0,0,0,0.35)'
-      }
-    }
-  }
 
   return (
     <Card>
@@ -68,7 +38,7 @@ const DepositWithdraw = () => {
           <CardContent className='flex flex-col gap-5' sx={{
             maxHeight: '330px',
             overflowY: 'auto',
-            ...commonStyle.scrollBarStyle
+            ...scrollBarStyle
           }}>
             {isLoading
               ? Array.from({ length: 5 }).map((_, i) => (
@@ -114,7 +84,7 @@ const DepositWithdraw = () => {
           <CardContent className='flex flex-col gap-5' sx={{
             maxHeight: '330px',
             overflowY: 'auto',
-            ...commonStyle.scrollBarStyle
+            ...scrollBarStyle
           }}>
             {isLoading
               ? Array.from({ length: 3 }).map((_, i) => (

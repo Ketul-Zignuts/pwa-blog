@@ -36,3 +36,29 @@ export const calculateReadTime = (content: string) => {
   const words = text ? text.split(' ').length : 0
   return Math.max(1, Math.ceil(words / 200))
 }
+
+export const getCommonScrollbarStyle = (isDarkMode: boolean) => ({
+  scrollbarWidth: 'thin',
+  scrollbarColor: isDarkMode
+    ? 'rgba(255,255,255,0.2) transparent'
+    : 'rgba(0,0,0,0.2) transparent',
+
+  '&::-webkit-scrollbar': {
+    width: '6px'
+  },
+  '&::-webkit-scrollbar-track': {
+    background: 'transparent'
+  },
+  '&::-webkit-scrollbar-thumb': {
+    backgroundColor: isDarkMode
+      ? 'rgba(255,255,255,0.2)'
+      : 'rgba(0,0,0,0.2)',
+    borderRadius: '20px',
+    transition: 'background-color 0.2s ease'
+  },
+  '&::-webkit-scrollbar-thumb:hover': {
+    backgroundColor: isDarkMode
+      ? 'rgba(255,255,255,0.35)'
+      : 'rgba(0,0,0,0.35)'
+  }
+})
