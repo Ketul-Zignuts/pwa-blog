@@ -1,43 +1,55 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { adminSupabase } from '@/lib/supabase-server';
+import { NextRequest, NextResponse } from 'next/server'
+import { adminSupabase } from '@/lib/supabase-server'
 
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const page = Number(searchParams.get('page') ?? 1);
-    const limit = Number(searchParams.get('limit') ?? 10);
-    const search = searchParams.get('search');
+    const { searchParams } = new URL(req.url)
 
-    const from = (page - 1) * limit;
-    const to = from + limit - 1;
+    const page = Number(searchParams.get('page') ?? 1)
+    const limit = Number(searchParams.get('limit') ?? 10)
+    const search = searchParams.get('search')
 
-    // 1. Build the base query
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
     let query = adminSupabase
       .from('users')
-      .select('displayName, email, isadmin, isroadmin, created_at, bio', { count: 'exact' })
+      .select(
+        `
+        uid,
+        displayName,
+        email,
+        photoURL,
+        followers,
+        createdAt,
+        posts:posts(count),
+        comments:comments(count),
+        likes:post_likes(count)
+        `,
+        { count: 'exact' }
+      )
       .order('created_at', { ascending: false })
-      .range(from, to);
+      .range(from, to)
 
-    // 2. Add search functionality (Optional, but very useful for user tables)
     if (search) {
-      query = query.or(`displayName.ilike.%${search}%,email.ilike.%${search}%`);
+      query = query.or(`displayName.ilike.%${search}%,email.ilike.%${search}%`)
     }
 
-    const { data, count, error } = await query;
+    const { data, count, error } = await query
 
-    if (error) throw error;
+    if (error) throw error
 
-    // 3. Format the data to match your UI requirements
-    const formattedData = (data || []).map((user) => ({
-      name: user.displayName || 'Anonymous',
+    const formattedData = (data || []).map((user: any) => ({
+      photoURL: user.photoURL,
+      displayName: user.displayName || 'Anonymous',
       email: user.email,
-      role: user.isadmin ? 'Admin' : user.isroadmin ? 'Editor' : 'Author',
-      status: new Date(user.created_at).getTime() > Date.now() - 604800000 
-        ? 'Pending' 
-        : 'Active'
-    }));
 
-    // 4. Return identical response structure to your categories route
+      totalPosts: user.posts?.[0]?.count ?? 0,
+      totalComments: user.comments?.[0]?.count ?? 0,
+      totalLikes: user.likes?.[0]?.count ?? 0,
+      followers: user.followers ?? 0
+    }))
+
     return NextResponse.json({
       success: true,
       data: formattedData,
@@ -45,14 +57,15 @@ export async function GET(req: NextRequest) {
         page,
         limit,
         total: count ?? 0,
-        totalPages: Math.ceil((count ?? 0) / limit),
-      },
-    });
+        totalPages: Math.ceil((count ?? 0) / limit)
+      }
+    })
   } catch (err: any) {
-    console.error('User Fetch Error:', err);
+    console.error('User Fetch Error:', err)
+
     return NextResponse.json(
-      { success: false, message: err.message }, 
+      { success: false, message: err.message },
       { status: 500 }
-    );
+    )
   }
 }

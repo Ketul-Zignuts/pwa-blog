@@ -41,7 +41,6 @@ type Props = {
 }
 
 const FilteredBlogCard = ({ post }: Props) => {
-  console.log('post: ', post);
   const theme = useTheme()
 
   return (

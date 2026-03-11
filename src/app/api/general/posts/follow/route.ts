@@ -7,7 +7,6 @@ export async function POST(req: NextRequest) {
     const uid = req.headers.get('x-user-id')
 
     if (!uid) {
-      console.log('❌ No UID in header')
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
         { status: 401 }
@@ -18,7 +17,6 @@ export async function POST(req: NextRequest) {
     const following_uid = body?.following_uid?.trim()
 
     if (!following_uid) {
-      console.log('❌ following_uid missing')
       return NextResponse.json(
         { success: false, message: 'following_uid is required' },
         { status: 400 }
@@ -52,7 +50,6 @@ export async function POST(req: NextRequest) {
         .eq('following_uid', following_uid)
 
       if (error) {
-        console.log('❌ Unfollow error:', error.message)
         return NextResponse.json(
           { success: false, message: error.message },
           { status: 500 }
@@ -72,7 +69,6 @@ export async function POST(req: NextRequest) {
       ])
 
     if (insertError) {
-      console.log('❌ Follow insert error:', insertError.message)
       return NextResponse.json(
         { success: false, message: insertError.message },
         { status: 500 }

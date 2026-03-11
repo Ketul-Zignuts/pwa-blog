@@ -1,32 +1,32 @@
 'use client'
 
-// Next Imports
 import dynamic from 'next/dynamic'
-
-// MUI Imports
 import Card from '@mui/material/Card'
-import Button from '@mui/material/Button'
 import { useTheme } from '@mui/material/styles'
 import CardHeader from '@mui/material/CardHeader'
 import Typography from '@mui/material/Typography'
 import CardContent from '@mui/material/CardContent'
-
-// Third Party Imports
+import Skeleton from '@mui/material/Skeleton'
 import type { ApexOptions } from 'apexcharts'
+import { DashBoardBarChartData } from '@/types/dashBoardTypes'
 
-// Components Imports
-import OptionsMenu from '@core/components/option-menu'
-
-// Styled Component Imports
 const AppReactApexCharts = dynamic(() => import('@/lib/styles/AppReactApexCharts'))
 
-const WeeklyOverview = () => {
-  // Hooks
+type Props = {
+  barChartData: DashBoardBarChartData[]
+  loading: boolean
+}
+
+const WeeklyOverview = ({ barChartData, loading }: Props) => {
   const theme = useTheme()
 
-  // Vars
   const divider = 'var(--mui-palette-divider)'
   const disabled = 'var(--mui-palette-text-disabled)'
+
+  const categories = barChartData?.map(item => item.day) ?? []
+  const seriesData = barChartData?.map(item => item.postCount) ?? []
+
+  const totalPosts = seriesData.reduce((acc, val) => acc + val, 0)
 
   const options: ApexOptions = {
     chart: {
@@ -48,7 +48,8 @@ const WeeklyOverview = () => {
     grid: {
       xaxis: { lines: { show: false } },
       strokeDashArray: 7,
-      padding: { left: -9, top: -20, bottom: 13 },
+      // FIX: Increased left padding to prevent cutoff
+      padding: { left: 10, top: -20, bottom: 13 },
       borderColor: divider
     },
     dataLabels: { enabled: false },
@@ -58,18 +59,15 @@ const WeeklyOverview = () => {
       'var(--mui-palette-customColors-trackBg)',
       'var(--mui-palette-primary-main)',
       'var(--mui-palette-customColors-trackBg)',
+      'var(--mui-palette-customColors-trackBg)',
       'var(--mui-palette-customColors-trackBg)'
     ],
     states: {
-      hover: {
-        filter: { type: 'none' }
-      },
-      active: {
-        filter: { type: 'none' }
-      }
+      hover: { filter: { type: 'none' } },
+      active: { filter: { type: 'none' } }
     },
     xaxis: {
-      categories: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+      categories,
       tickPlacement: 'on',
       labels: { show: false },
       axisTicks: { show: false },
@@ -78,36 +76,46 @@ const WeeklyOverview = () => {
     yaxis: {
       show: true,
       tickAmount: 4,
+      // FIX: Ensure only whole numbers are shown
+      decimalsInFloat: 0, 
       labels: {
         offsetY: 2,
-        offsetX: -17,
-        style: { colors: disabled, fontSize: theme.typography.body2.fontSize as string },
-        formatter: value => `${value > 999 ? `${(value / 1000).toFixed(0)}` : value}k`
+        // FIX: Adjusted offset to pull label inside the card
+        offsetX: -10, 
+        style: {
+          colors: disabled,
+          fontSize: theme.typography.body2.fontSize as string
+        }
       }
     }
   }
 
   return (
     <Card>
-      <CardHeader
-        title='Weekly Overview'
-        action={<OptionsMenu iconClassName='text-textPrimary' options={['Refresh', 'Update', 'Delete']} />}
-      />
-      <CardContent sx={{ '& .apexcharts-xcrosshairs.apexcharts-active': { opacity: 0 } }}>
-        <AppReactApexCharts
-          type='bar'
-          height={206}
-          width='100%'
-          series={[{ name: 'Sales', data: [37, 57, 45, 75, 57, 40, 65] }]}
-          options={options}
-        />
+
+      <CardContent className='flex flex-col gap-9' sx={{ '& .apexcharts-xcrosshairs.apexcharts-active': { opacity: 0 } }}>
+        <Typography variant='h5'>Weekly Overview</Typography>
+        {loading ? (
+          <Skeleton variant='rectangular' height={206} />
+        ) : (
+          <AppReactApexCharts
+            type='bar'
+            height={220}
+            width='100%'
+            series={[{ name: 'Posts', data: seriesData }]}
+            options={options}
+          />
+        )}
+
         <div className='flex items-center mbe-4 gap-4'>
-          <Typography variant='h4'>45%</Typography>
-          <Typography>Your sales performance is 45% 😎 better compared to last month</Typography>
+          {loading ? (
+            <Skeleton width={80} height={40} />
+          ) : (
+            <Typography variant='h4'>{totalPosts}</Typography>
+          )}
+
+          <Typography>Posts created this week</Typography>
         </div>
-        <Button fullWidth variant='contained'>
-          Details
-        </Button>
       </CardContent>
     </Card>
   )

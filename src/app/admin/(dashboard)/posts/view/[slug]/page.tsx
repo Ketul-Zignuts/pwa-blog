@@ -44,5 +44,5 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default function BlogPage({ params }: Props) {
-  return <BlogDetail slug={params.slug} isFromAdmin={false} />
+  return <BlogDetail slug={params.slug} isFromAdmin={true} />
 }

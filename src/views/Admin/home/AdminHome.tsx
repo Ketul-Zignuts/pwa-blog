@@ -1,4 +1,4 @@
-// MUI Imports
+'use client'
 import Grid from '@mui/material/Grid'
 
 // Components Imports
@@ -13,8 +13,20 @@ import DepositWithdraw from '@/components/dashboard/DepositWithdraw'
 import SalesByCountries from '@/components/dashboard/SalesByCountries'
 import CardStatVertical from '@/components/dashboard/Vertical'
 import Table from '@/components/dashboard/Table'
+import { useQuery } from '@tanstack/react-query'
+import { chartAction, summaryAction } from '@/constants/api/admin/dashboard'
+import { DashBoardChartData } from '@/types/dashBoardTypes'
 
 const AdminHome = () => {
+  const { data: summaryData, isLoading: summaryDataLoading } = useQuery({
+    queryKey: ['dashboard-summary'],
+    queryFn: () => summaryAction(),
+  })
+  const { data: chartData, isLoading: chartDataLoading } = useQuery({
+    queryKey: ['dashboard-chart'],
+    queryFn: () => chartAction(),
+  })
+
   return (
     <Grid container spacing={6}>
       <Grid item xs={12} md={4}>
@@ -24,45 +36,45 @@ const AdminHome = () => {
         <Transactions />
       </Grid>
       <Grid item xs={12} md={6} lg={4}>
-        <WeeklyOverview />
+        <WeeklyOverview barChartData={Array.isArray(chartData?.barChart) && chartData?.barChart?.length > 0 ? chartData?.barChart : []} loading={chartDataLoading}/>
       </Grid>
       <Grid item xs={12} md={6} lg={4}>
-        <TotalEarning />
+        <TotalEarning summaryData={summaryData} loading={summaryDataLoading} />
       </Grid>
       <Grid item xs={12} md={6} lg={4}>
         <Grid container spacing={6}>
           <Grid item xs={12} sm={6}>
-            <LineChart />
+            <LineChart summaryData={summaryData} loading={summaryDataLoading} />
           </Grid>
           <Grid item xs={12} sm={6}>
             <CardStatVertical
-              title='Total Profit'
-              stats='$25.6k'
-              avatarIcon='ri-pie-chart-2-line'
+              title='Total Views'
+              stats={`${summaryData?.velocity?.totalViews ?? 0}`}
+              avatarIcon='ri-eye-line'
               avatarColor='secondary'
-              subtitle='Weekly Profit'
-              trendNumber='42%'
+              subtitle='Weekly Growth'
+              trendNumber={`${summaryData?.velocity?.weeklyGrowth ?? 0}%`}
+              trend={(summaryData?.velocity?.weeklyGrowth ?? 0) >= 0 ? 'positive' : 'negative'}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <CardStatVertical
+              title='Total Posts'
+              stats={`${summaryData?.velocity?.totalPosts ?? 0}`}
+              avatarIcon='ri-article-line'
+              avatarColor='primary'
+              subtitle='Published This Month'
+              trendNumber={`${summaryData?.velocity?.publishedThisMonth ?? 0}`}
               trend='positive'
             />
           </Grid>
           <Grid item xs={12} sm={6}>
-            <CardStatVertical
-              stats='862'
-              trend='negative'
-              trendNumber='18%'
-              title='New Project'
-              subtitle='Yearly Project'
-              avatarColor='primary'
-              avatarIcon='ri-file-word-2-line'
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <DistributedColumnChart />
+            <DistributedColumnChart summaryData={summaryData} loading={summaryDataLoading} />
           </Grid>
         </Grid>
       </Grid>
       <Grid item xs={12} md={6} lg={4}>
-        <Performance />
+        <Performance radarChartData={Array.isArray(chartData?.radarChart) && chartData?.radarChart?.length > 0 ? chartData?.radarChart : []} loading={chartDataLoading} />
       </Grid>
       <Grid item xs={12} lg={8}>
         <DepositWithdraw />

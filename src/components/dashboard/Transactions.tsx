@@ -1,84 +1,71 @@
-//MUI Imports
-import Card from '@mui/material/Card'
-import CardHeader from '@mui/material/CardHeader'
-import CardContent from '@mui/material/CardContent'
-import Typography from '@mui/material/Typography'
-import Grid from '@mui/material/Grid'
+import Card from '@mui/material/Card';
+import CardHeader from '@mui/material/CardHeader';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
+import Grid from '@mui/material/Grid';
+import Skeleton from '@mui/material/Skeleton';
+import CustomAvatar from '@core/components/mui/Avatar';
+import { useQuery } from '@tanstack/react-query';
+import { statsAction } from '@/constants/api/admin/dashboard';
 
-// Type Imports
-import type { ThemeColor } from '@core/types'
-
-// Components Imports
-import OptionMenu from '@core/components/option-menu'
-import CustomAvatar from '@core/components/mui/Avatar'
-
-type DataType = {
-  icon: string
-  stats: string
-  title: string
-  color: ThemeColor
-}
-
-// Vars
-const data: DataType[] = [
-  {
-    stats: '245k',
-    title: 'Sales',
-    color: 'primary',
-    icon: 'ri-pie-chart-2-line'
-  },
-  {
-    stats: '12.5k',
-    title: 'Users',
-    color: 'success',
-    icon: 'ri-group-line'
-  },
-  {
-    stats: '1.54k',
-    color: 'warning',
-    title: 'Products',
-    icon: 'ri-macbook-line'
-  },
-  {
-    stats: '$88k',
-    color: 'info',
-    title: 'Revenue',
-    icon: 'ri-money-dollar-circle-line'
-  }
-]
+// Define UI config for your dynamic keys
+const statsConfig: Record<string, { icon: string; color: any }> = {
+  archive: { icon: 'ri-pie-chart-2-line', color: 'primary' },
+  reach: { icon: 'ri-group-line', color: 'success' },
+  community: { icon: 'ri-macbook-line', color: 'warning' },
+  pipeline: { icon: 'ri-money-dollar-circle-line', color: 'info' }
+};
 
 const Transactions = () => {
+  const { data: dashboardStatsData, isLoading } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn: () => statsAction(),
+  });
+
   return (
     <Card className='bs-full'>
       <CardHeader
         title='Transactions'
-        action={<OptionMenu iconClassName='text-textPrimary' options={['Refresh', 'Share', 'Update']} />}
-        subheader={
-          <p className='mbs-3'>
-            <span className='font-medium text-textPrimary'>Total 48.5% Growth 😎</span>
-            <span className='text-textSecondary'>this month</span>
-          </p>
-        }
+        subheader={<p className='mbs-3'><span className='font-medium text-textPrimary'>Stats Overview</span></p>}
       />
       <CardContent className='!pbs-5'>
-        <Grid container spacing={2}>
-          {data.map((item, index) => (
-            <Grid item xs={6} md={3} key={index}>
-              <div className='flex items-center gap-3'>
-                <CustomAvatar variant='rounded' color={item.color} className='shadow-xs'>
-                  <i className={item.icon}></i>
-                </CustomAvatar>
-                <div>
-                  <Typography>{item.title}</Typography>
-                  <Typography variant='h5'>{item.stats}</Typography>
+        {isLoading ? (
+          <Grid container spacing={2}>
+            {[1, 2, 3, 4].map((i) => (
+              <Grid item xs={6} md={3} key={i}>
+                <div className='flex items-center gap-3'>
+                  <Skeleton variant="rounded" width={40} height={40} />
+                  <div>
+                    <Skeleton width={60} />
+                    <Skeleton width={40} height={30} />
+                  </div>
                 </div>
-              </div>
-            </Grid>
-          ))}
-        </Grid>
+              </Grid>
+            ))}
+          </Grid>
+        ) : (
+          <Grid container spacing={2}>
+            {dashboardStatsData && Object.entries(dashboardStatsData).map(([key, item]: [string, any]) => {
+              const config = statsConfig[key];
+              return (
+                <Grid item xs={6} md={3} key={key}>
+                  <div className='flex items-center gap-3'>
+                    <CustomAvatar variant='rounded' color={config?.color || 'primary'} className='shadow-xs'>
+                      <i className={config?.icon || 'ri-dashboard-line'}></i>
+                    </CustomAvatar>
+                    <div>
+                      <Typography>{item.label}</Typography>
+                      <Typography variant='h5'>{item.value}</Typography>
+                    </div>
+                  </div>
+                </Grid>
+              );
+            })}
+          </Grid>
+        )}
       </CardContent>
     </Card>
-  )
-}
+  );
+};
 
-export default Transactions
+export default Transactions;

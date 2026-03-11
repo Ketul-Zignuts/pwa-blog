@@ -173,8 +173,7 @@ export async function POST(req: NextRequest) {
     }
 
     const generatedSlug = await generateUniqueSlug('posts', title)
-
-    console.log('finalUserId: ', finalUserId);
+    
     const upsertData: any = {
       id: postId,
       user_id: finalUserId,

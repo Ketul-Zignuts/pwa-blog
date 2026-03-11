@@ -1,145 +1,165 @@
+'use client'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
 import Grid from '@mui/material/Grid'
+import Skeleton from '@mui/material/Skeleton'
+import Avatar from '@mui/material/Avatar'
 
 // Component Imports
 import Link from '@components/Link'
 
-type DataType = {
-  logo: string
-  title: string
-  amount: string
-  subtitle: string
-}
-
-// Vars
-const depositData: DataType[] = [
-  {
-    amount: '+$4,650',
-    subtitle: 'Sell UI Kit',
-    title: 'Gumroad Account',
-    logo: '/images/cards/gumroad.png'
-  },
-  {
-    amount: '+$92,705',
-    title: 'Mastercard',
-    subtitle: 'Wallet deposit',
-    logo: '/images/logos/mastercard.png'
-  },
-  {
-    amount: '+$957',
-    title: 'Stripe Account',
-    subtitle: 'iOS Application',
-    logo: '/images/logos/stripe.png'
-  },
-  {
-    amount: '+$6,837',
-    title: 'American Bank',
-    subtitle: 'Bank Transfer',
-    logo: '/images/logos/american-bank.png'
-  },
-  {
-    amount: '+$446',
-    title: 'Bank Account',
-    subtitle: 'Wallet deposit',
-    logo: '/images/logos/citi-bank.png'
-  }
-]
-
-const withdrawData = [
-  {
-    amount: '-$145',
-    title: 'Google Adsense',
-    subtitle: 'Paypal deposit',
-    logo: '/images/logos/google.png'
-  },
-  {
-    amount: '-$1870',
-    title: 'Github Enterprise',
-    logo: '/images/logos/github.png',
-    subtitle: 'Security & compliance'
-  },
-  {
-    amount: '-$450',
-    title: 'Upgrade Slack Plan',
-    subtitle: 'Debit card deposit',
-    logo: '/images/logos/slack.png'
-  },
-  {
-    amount: '-$540',
-    title: 'Digital Ocean',
-    subtitle: 'Cloud Hosting',
-    logo: '/images/logos/digital-ocean.png'
-  },
-  {
-    amount: '-$21',
-    title: 'AWS Account',
-    logo: '/images/logos/aws.png',
-    subtitle: 'Choosing a Cloud Platform'
-  }
-]
+// API
+import { topActivityAction } from '@/constants/api/admin/dashboard'
+import { useQuery } from '@tanstack/react-query'
+import { Rating } from '@mui/material'
+import { useSettings } from '@/@core/hooks/useSettings'
 
 const DepositWithdraw = () => {
+  const { settings } = useSettings();
+  const isDarkMode = settings?.mode === 'dark';
+
+  const { data: topActivityData, isLoading } = useQuery({
+    queryKey: ['dashboard-activity'],
+    queryFn: () => topActivityAction()
+  })
+
+  const commonStyle = {
+    scrollBarStyle: {
+      scrollbarWidth: 'thin',
+      scrollbarColor: isDarkMode
+        ? 'rgba(255,255,255,0.2) transparent'
+        : 'rgba(0,0,0,0.2) transparent',
+
+      /* Chrome, Edge, Safari */
+      '&::-webkit-scrollbar': {
+        width: '6px'
+      },
+      '&::-webkit-scrollbar-track': {
+        background: 'transparent'
+      },
+      '&::-webkit-scrollbar-thumb': {
+        backgroundColor: isDarkMode
+          ? 'rgba(255,255,255,0.2)'
+          : 'rgba(0,0,0,0.2)',
+        borderRadius: '20px',
+        transition: 'background-color 0.2s ease'
+      },
+      '&::-webkit-scrollbar-thumb:hover': {
+        backgroundColor: isDarkMode
+          ? 'rgba(255,255,255,0.35)'
+          : 'rgba(0,0,0,0.35)'
+      }
+    }
+  }
+
   return (
     <Card>
       <Grid container>
+        {/* COMMENTS */}
         <Grid item xs={12} md={6} className='border-be md:border-be-0 md:border-ie'>
           <CardHeader
-            title='Deposit'
-            action={
-              <Typography component={Link} className='font-medium' color='primary'>
-                View All
-              </Typography>
-            }
+            title='Recent Comments'
           />
-          <CardContent className='flex flex-col gap-5'>
-            {depositData.map((item, index) => (
-              <div key={index} className='flex items-center gap-4'>
-                <img src={item.logo} alt={item.title} width={30} />
-                <div className='flex justify-between items-center is-full flex-wrap gap-x-4 gap-y-2'>
-                  <div className='flex flex-col gap-0.5'>
-                    <Typography color='text.primary' className='font-medium'>
-                      {item.title}
-                    </Typography>
-                    <Typography>{item.subtitle}</Typography>
+
+          <CardContent className='flex flex-col gap-5' sx={{
+            maxHeight: '330px',
+            overflowY: 'auto',
+            ...commonStyle.scrollBarStyle
+          }}>
+            {isLoading
+              ? Array.from({ length: 5 }).map((_, i) => (
+                <div key={i} className='flex items-center gap-4'>
+                  <Skeleton variant='circular' width={32} height={32} />
+                  <div className='flex justify-between items-center is-full'>
+                    <div className='flex flex-col gap-1'>
+                      <Skeleton width={120} height={18} />
+                      <Skeleton width={220} height={16} />
+                    </div>
+                    <Skeleton width={60} height={18} />
                   </div>
-                  <Typography color='success.main' className='font-medium'>
-                    {item.amount}
-                  </Typography>
                 </div>
-              </div>
-            ))}
+              ))
+              : topActivityData?.recentComments?.map((item: any, index: number) => (
+                <div key={index} className='flex items-center gap-4'>
+                  <Avatar sx={{ width: 30, height: 30 }} src={item?.users?.photoURL} />
+
+                  <div className='flex justify-between items-center is-full flex-wrap gap-x-4 gap-y-2'>
+                    <div className='flex flex-col gap-0.5'>
+                      <Typography color='text.primary' className='font-medium'>
+                        {item.users?.displayName}
+                      </Typography>
+
+                      <Typography variant='body2' color='text.secondary'>
+                        {item.content.length > 80
+                          ? item.content.slice(0, 80) + '...'
+                          : item.content}
+                      </Typography>
+                    </div>
+                  </div>
+                </div>
+              ))}
           </CardContent>
         </Grid>
+
+        {/* REVIEWS */}
         <Grid item xs={12} md={6}>
           <CardHeader
-            title='Withdraw'
-            action={
-              <Typography component={Link} className='font-medium' color='primary'>
-                View All
-              </Typography>
-            }
+            title='Recent Reviews'
           />
-          <CardContent className='flex flex-col gap-5'>
-            {withdrawData.map((item, index) => (
-              <div key={index} className='flex items-center gap-4'>
-                <img src={item.logo} alt={item.title} width={30} />
-                <div className='flex justify-between items-center is-full flex-wrap gap-x-4 gap-y-2'>
-                  <div className='flex flex-col gap-0.5'>
-                    <Typography color='text.primary' className='font-medium'>
-                      {item.title}
-                    </Typography>
-                    <Typography>{item.subtitle}</Typography>
+
+          <CardContent className='flex flex-col gap-5' sx={{
+            maxHeight: '330px',
+            overflowY: 'auto',
+            ...commonStyle.scrollBarStyle
+          }}>
+            {isLoading
+              ? Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className='flex items-center gap-4'>
+                  <Skeleton variant='circular' width={32} height={32} />
+                  <div className='flex justify-between items-center is-full'>
+                    <div className='flex flex-col gap-1'>
+                      <Skeleton width={120} height={18} />
+                      <Skeleton width={220} height={16} />
+                    </div>
+                    <Skeleton width={40} height={18} />
                   </div>
-                  <Typography color='error.main' className='font-medium'>
-                    {item.amount}
-                  </Typography>
                 </div>
-              </div>
-            ))}
+              ))
+              : topActivityData?.recentReviews?.map((item: any, index: number) => (
+                <div key={index} className='flex items-center gap-4'>
+                  <Avatar sx={{ width: 30, height: 30 }} src={item?.users?.photoURL} />
+
+                  <div className='flex justify-between items-center is-full flex-wrap gap-x-4 gap-y-2'>
+                    <div className='flex flex-col gap-0.5'>
+                      <Typography color='text.primary' className='font-medium'>
+                        {item.users?.displayName}
+                      </Typography>
+
+                      <Typography variant='body2' color='text.secondary'>
+                        {item.review.length > 80
+                          ? item.review.slice(0, 80) + '...'
+                          : item.review}
+                      </Typography>
+                    </div>
+
+                    <div className='flex items-center gap-1'>
+                      <Rating
+                        value={Number(item.rating)}
+                        precision={0.5}
+                        size="small"
+                        readOnly
+                      />
+                      <Typography variant='body2' color='text.secondary'>
+                        {item.rating}
+                      </Typography>
+                    </div>
+                  </div>
+                </div>
+              ))}
           </CardContent>
         </Grid>
       </Grid>

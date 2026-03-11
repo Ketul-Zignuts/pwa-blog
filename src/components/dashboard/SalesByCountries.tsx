@@ -1,131 +1,101 @@
+'use client'
+
 // MUI Imports
 import Card from '@mui/material/Card'
 import CardHeader from '@mui/material/CardHeader'
 import CardContent from '@mui/material/CardContent'
 import Typography from '@mui/material/Typography'
+import Skeleton from '@mui/material/Skeleton'
 
 // Third-party Imports
 import classnames from 'classnames'
-
-// Type Imports
-import type { ThemeColor } from '@core/types'
-
-// Components Imports
-import OptionMenu from '@core/components/option-menu'
 import CustomAvatar from '@core/components/mui/Avatar'
 
-type DataType = {
-  avatarLabel: string
-  avatarColor?: ThemeColor
-  title: string
-  subtitle: string
-  sales: string
-  trend: 'up' | 'down'
-  trendPercentage: string
-}
-
-// Vars
-const data: DataType[] = [
-  {
-    avatarLabel: 'US',
-    avatarColor: 'success',
-    title: '$8,656k',
-    subtitle: 'United states of america',
-    sales: '894k',
-    trend: 'up',
-    trendPercentage: '25.8%'
-  },
-  {
-    avatarLabel: 'UK',
-    avatarColor: 'error',
-    title: '$2,415k',
-    subtitle: 'United kingdom',
-    sales: '645k',
-    trend: 'down',
-    trendPercentage: '6.2%'
-  },
-  {
-    avatarLabel: 'IN',
-    avatarColor: 'warning',
-    title: '$865k',
-    subtitle: 'India',
-    sales: '148k',
-    trend: 'up',
-    trendPercentage: '12.4%'
-  },
-  {
-    avatarLabel: 'JA',
-    avatarColor: 'secondary',
-    title: '$745k',
-    subtitle: 'Japan',
-    sales: '86k',
-    trend: 'down',
-    trendPercentage: '11.9%'
-  },
-  {
-    avatarLabel: 'KO',
-    avatarColor: 'error',
-    title: '$45k',
-    subtitle: 'Korea',
-    sales: '42k',
-    trend: 'up',
-    trendPercentage: '16.2%'
-  },
-  {
-    avatarLabel: 'CH',
-    avatarColor: 'primary',
-    title: '$12k',
-    subtitle: 'China',
-    sales: '8k',
-    trend: 'up',
-    trendPercentage: '14.8%'
-  }
-]
+// API
+import { useQuery } from '@tanstack/react-query'
+import { topCategoryAction } from '@/constants/api/admin/dashboard'
+import React from 'react'
+import { Divider } from '@mui/material'
 
 const SalesByCountries = () => {
+  const { data: topCategoryData, isLoading } = useQuery({
+    queryKey: ['dashboard-top-cat-performer'],
+    queryFn: () => topCategoryAction()
+  })
+
   return (
     <Card>
       <CardHeader
-        title='Sales by Countries'
-        action={<OptionMenu iconClassName='text-textPrimary' options={['Last 28 Days', 'Last Month', 'Last Year']} />}
+        title='Top Categories'
       />
-      <CardContent className='flex flex-col gap-[0.875rem]'>
-        {data.map((item, index) => (
-          <div key={index} className='flex items-center gap-4'>
-            <CustomAvatar skin='light' color={item.avatarColor}>
-              {item.avatarLabel}
-            </CustomAvatar>
-            <div className='flex items-center justify-between is-full flex-wrap gap-x-4 gap-y-2'>
-              <div className='flex flex-col gap-1'>
-                <div className='flex items-center gap-1'>
-                  <Typography color='text.primary' className='font-medium'>
-                    {item.title}
-                  </Typography>
-                  <div className={'flex items-center gap-1'}>
-                    <i
-                      className={classnames(
-                        item.trend === 'up' ? 'ri-arrow-up-s-line' : 'ri-arrow-down-s-line',
-                        item.trend === 'up' ? 'text-success' : 'text-error'
-                      )}
-                    ></i>
-                    <Typography color={item.trend === 'up' ? 'success.main' : 'error.main'}>
-                      {item.trendPercentage}
+
+      <CardContent className='flex flex-col gap-3'>
+        {isLoading
+          ? Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className='flex items-center gap-4'>
+              <Skeleton variant='circular' width={36} height={36} />
+
+              <div className='flex items-center justify-between is-full'>
+                <div className='flex flex-col gap-1'>
+                  <Skeleton width={120} height={18} />
+                  <Skeleton width={160} height={14} />
+                </div>
+
+                <div className='flex flex-col gap-1'>
+                  <Skeleton width={40} height={18} />
+                  <Skeleton width={30} height={14} />
+                </div>
+              </div>
+            </div>
+          ))
+          : topCategoryData?.map((item: any, index: number) => (
+            <React.Fragment key={index}>
+              <div className='flex items-center gap-4'>
+                <CustomAvatar skin='light'>
+                  <i className={item.icon}></i>
+                </CustomAvatar>
+
+                <div className='flex items-center justify-between is-full flex-wrap gap-x-4 gap-y-2'>
+                  <div className='flex flex-col gap-1'>
+                    <div className='flex items-center gap-1'>
+                      <Typography color='text.primary' className='font-medium'>
+                        {item.value}
+                      </Typography>
+
+                      <div className='flex items-center gap-1'>
+                        <i
+                          className={classnames(
+                            item.isUp
+                              ? 'ri-arrow-up-s-line text-success'
+                              : 'ri-arrow-down-s-line text-error'
+                          )}
+                        />
+
+                        <Typography
+                          color={item.isUp ? 'success.main' : 'error.main'}
+                        >
+                          {item.trend}
+                        </Typography>
+                      </div>
+                    </div>
+
+                    <Typography>{item.label}</Typography>
+                  </div>
+
+                  <div className='flex flex-col gap-1'>
+                    <Typography color='text.primary' className='font-medium'>
+                      {item.secondaryValue}
+                    </Typography>
+
+                    <Typography variant='body2' color='text.disabled'>
+                      Posts
                     </Typography>
                   </div>
                 </div>
-                <Typography>{item.subtitle}</Typography>
               </div>
-              <div className='flex flex-col gap-1'>
-                <Typography color='text.primary' className='font-medium'>
-                  {item.sales}
-                </Typography>
-                <Typography variant='body2' color='text.disabled'>
-                  Sales
-                </Typography>
-              </div>
-            </div>
-          </div>
-        ))}
+              {index !== topCategoryData.length - 1 && <Divider sx={{ my: 0.4 }} />}
+            </React.Fragment>
+          ))}
       </CardContent>
     </Card>
   )

@@ -22,14 +22,6 @@ const CardStatVertical = (props: CardStatsVerticalProps) => {
           <CustomAvatar color={avatarColor} skin={avatarSkin} size={avatarSize} className='shadow-xs'>
             <i className={avatarIcon} />
           </CustomAvatar>
-          <OptionMenu
-            {...(moreOptions
-              ? moreOptions
-              : {
-                  options: ['Refresh', 'Share', 'Update'],
-                  iconButtonProps: { className: 'text-textPrimary' }
-                })}
-          />
         </div>
         <div className='flex flex-col gap-1'>
           <Typography color='text.primary' className='font-medium'>

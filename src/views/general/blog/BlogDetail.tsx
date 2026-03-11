@@ -17,9 +17,10 @@ import 'react-medium-image-zoom/dist/styles.css' // Required styles
 
 type Props = {
   slug: string
+  isFromAdmin?:boolean
 }
 
-const BlogDetail = ({ slug }: Props) => {
+const BlogDetail = ({ slug,isFromAdmin }: Props) => {
   const { data: postData, isLoading } = useQuery({
     queryKey: ['blogDetail', slug],
     queryFn: () => postDetailGetAction(slug),
@@ -32,8 +33,8 @@ const BlogDetail = ({ slug }: Props) => {
 
   return (
     <Box sx={{ minHeight: '100vh' }}>
-      <HomeNavbar showBoxShadow={true} />
-      <Container maxWidth="lg" sx={{mt:10}}>
+      {!isFromAdmin && (<HomeNavbar showBoxShadow={true} />)}
+      <Container maxWidth={isFromAdmin ? 'xl' : 'lg'} sx={{mt:isFromAdmin ? 0 : 10,...(isFromAdmin ? {px:'0px !important'} : {})}}>
         <Grid container spacing={0}>
           <Grid item xs={12}>
             <BlogHeroImage blog={blogDetailData} />

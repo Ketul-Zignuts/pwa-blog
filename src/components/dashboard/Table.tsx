@@ -1,163 +1,166 @@
-// MUI Imports
-import Typography from '@mui/material/Typography'
-import Card from '@mui/material/Card'
-import Chip from '@mui/material/Chip'
+'use client'
 
-// Third-party Imports
-import classnames from 'classnames'
+import { useState, useCallback } from 'react'
+import {
+  GridColDef,
+  GridRenderCellParams,
+  type GridPaginationModel
+} from '@mui/x-data-grid'
+import { Chip, Avatar, Box, Typography, Paper } from '@mui/material'
+import { useQuery } from '@tanstack/react-query'
+import { DataGridTable } from '@/components/common/DataGridTable'
+import { dashBoardUserListAction } from '@/constants/api/admin/dashboard'
 
-// Components Imports
-import CustomAvatar from '@core/components/mui/Avatar'
-
-// Styles Imports
-import tableStyles from '@core/styles/table.module.css'
-
-type TableBodyRowType = {
-  avatarSrc?: string
-  name: string
-  username: string
+type DashboardUserType = {
+  photoURL: string
+  displayName: string
   email: string
-  iconClass: string
-  roleIcon?: string
-  role: string
-  status: string
+  totalPosts: number
+  totalComments: number
+  totalLikes: number
+  followers: number
 }
 
-// Vars
-const rowsData: TableBodyRowType[] = [
-  {
-    avatarSrc: '/images/avatars/1.png',
-    name: 'Jordan Stevenson',
-    username: '@amiccoo',
-    email: 'Jacinthe_Blick@hotmail.com',
-    iconClass: 'text-primary',
-    roleIcon: 'ri-vip-crown-line',
-    role: 'Admin',
-    status: 'pending'
-  },
-  {
-    avatarSrc: '/images/avatars/2.png',
-    name: 'Richard Payne',
-    username: '@brossiter15',
-    email: 'Jaylon_Bartell3@gmail.com',
-    iconClass: 'text-warning',
-    roleIcon: 'ri-edit-box-line',
-    role: 'Editor',
-    status: 'active'
-  },
-  {
-    avatarSrc: '/images/avatars/3.png',
-    name: 'Jennifer Summers',
-    username: '@jsbemblinf',
-    email: 'Tristin_Johnson@gmail.com',
-    iconClass: 'text-error',
-    roleIcon: 'ri-computer-line',
-    role: 'Author',
-    status: 'active'
-  },
-  {
-    avatarSrc: '/images/avatars/4.png',
-    name: 'Mr. Justin Richardson',
-    username: '@justin45',
-    email: 'Toney21@yahoo.com',
-    iconClass: 'text-warning',
-    roleIcon: 'ri-edit-box-line',
-    role: 'Editor',
-    status: 'pending'
-  },
-  {
-    avatarSrc: '/images/avatars/5.png',
-    name: 'Nicholas Tanner',
-    username: '@tannernic',
-    email: 'Hunter_Kuhic68@hotmail.com',
-    iconClass: 'text-info',
-    roleIcon: 'ri-pie-chart-2-line',
-    role: 'Maintainer',
-    status: 'active'
-  },
-  {
-    avatarSrc: '/images/avatars/6.png',
-    name: 'Crystal Mays',
-    username: '@crystal99',
-    email: 'Norene_Bins@yahoo.com',
-    iconClass: 'text-warning',
-    roleIcon: 'ri-edit-box-line',
-    role: 'Editor',
-    status: 'pending'
-  },
-  {
-    avatarSrc: '/images/avatars/7.png',
-    name: 'Mary Garcia',
-    username: '@marygarcia4',
-    email: 'Emmitt.Walker14@hotmail.com',
-    iconClass: 'text-info',
-    roleIcon: 'ri-pie-chart-2-line',
-    role: 'Maintainer',
-    status: 'inactive'
-  },
-  {
-    avatarSrc: '/images/avatars/8.png',
-    name: 'Megan Roberts',
-    username: '@megan78',
-    email: 'Patrick.Howe73@gmail.com',
-    iconClass: 'text-success',
-    roleIcon: 'ri-user-3-line',
-    role: 'Subscriber',
-    status: 'active'
-  }
-]
-
 const Table = () => {
+  const [page, setPage] = useState(0)
+  const [pageSize, setPageSize] = useState(10)
+  const [search, setSearch] = useState('')
+
+  const handlePaginationChange = useCallback(
+    (newModel: GridPaginationModel) => {
+      if (newModel.pageSize !== pageSize) {
+        setPage(0)
+        setPageSize(newModel.pageSize)
+        return
+      }
+
+      setPage(newModel.page)
+    },
+    [pageSize]
+  )
+
+  const { data: usersData, isLoading } = useQuery({
+    queryKey: ['dashboard-users-lists', page, pageSize, search],
+    queryFn: async () => {
+      const res = await dashBoardUserListAction({
+        page: page + 1,
+        limit: pageSize,
+        search: search || undefined
+      })
+      return res
+    },
+    staleTime: 1000,
+    gcTime: 5 * 60 * 1000
+  })
+
+  const data: DashboardUserType[] = usersData?.data ?? []
+  const rowCount = usersData?.pagination?.total ?? 0
+
+  const columns: GridColDef[] = [
+    {
+      field: 'index',
+      headerName: '#',
+      width: 70,
+      sortable: false,
+      filterable: false,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: (params: GridRenderCellParams) => {
+        const rowIndex = params.api.getRowIndexRelativeToVisibleRows(params.id)
+        return page * pageSize + rowIndex + 1
+      }
+    },
+
+    {
+      field: 'user',
+      headerName: 'User',
+      minWidth: 320,
+      sortable: false,
+      renderCell: ({ row }: GridRenderCellParams) => (
+        <Box display="flex" alignItems="center" gap={2}>
+          <Avatar src={row.photoURL} alt={row.displayName} />
+
+          <Box display="flex" flexDirection="column">
+            <Typography fontWeight={500}>{row.displayName}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {row.email}
+            </Typography>
+          </Box>
+        </Box>
+      )
+    },
+
+    {
+      field: 'totalPosts',
+      headerName: 'Posts',
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }: GridRenderCellParams) => (
+        <Chip label={value} color="primary" variant="tonal" size="small" />
+      )
+    },
+
+    {
+      field: 'totalComments',
+      headerName: 'Comments',
+      width: 130,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }: GridRenderCellParams) => (
+        <Chip label={value} color="info" variant="tonal" size="small" />
+      )
+    },
+
+    {
+      field: 'totalLikes',
+      headerName: 'Likes',
+      width: 120,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }: GridRenderCellParams) => (
+        <Chip label={value} color="success" variant="tonal" size="small" />
+      )
+    },
+
+    {
+      field: 'followers',
+      headerName: 'Followers',
+      width: 130,
+      align: 'center',
+      headerAlign: 'center',
+      renderCell: ({ value }: GridRenderCellParams) => (
+        <Chip label={value} color="secondary" variant="tonal" size="small" />
+      )
+    }
+  ]
+
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      if (value === search) return
+      setPage(0)
+      setSearch(value)
+    },
+    [search]
+  )
+
+  const paginationModel: GridPaginationModel = { page, pageSize }
+
   return (
-    <Card>
-      <div className='overflow-x-auto'>
-        <table className={tableStyles.table}>
-          <thead>
-            <tr>
-              <th>User</th>
-              <th>Email</th>
-              <th>Role</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rowsData.map((row, index) => (
-              <tr key={index}>
-                <td className='!plb-1'>
-                  <div className='flex items-center gap-3'>
-                    <CustomAvatar src={row.avatarSrc} size={34} />
-                    <div className='flex flex-col'>
-                      <Typography color='text.primary' className='font-medium'>
-                        {row.name}
-                      </Typography>
-                      <Typography variant='body2'>{row.username}</Typography>
-                    </div>
-                  </div>
-                </td>
-                <td className='!plb-1'>
-                  <Typography>{row.email}</Typography>
-                </td>
-                <td className='!plb-1'>
-                  <div className='flex gap-2'>
-                    <i className={classnames(row.roleIcon, row.iconClass, 'text-[22px]')} />
-                    <Typography color='text.primary'>{row.role}</Typography>
-                  </div>
-                </td>
-                <td className='!pb-1'>
-                  <Chip
-                    className='capitalize'
-                    variant='tonal'
-                    color={row.status === 'pending' ? 'warning' : row.status === 'inactive' ? 'secondary' : 'success'}
-                    label={row.status}
-                    size='small'
-                  />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </Card>
+    <Box component={Paper} elevation={3}>
+      <DataGridTable
+        columns={columns}
+        rows={data}
+        rowCount={rowCount}
+        getRowId={(row) => row.email} // unique id
+        paginationModel={paginationModel}
+        onPaginationModelChange={handlePaginationChange}
+        isLoading={isLoading}
+        searchValue={search}
+        onSearchChange={handleSearchChange}
+        height={460}
+      />
+    </Box>
   )
 }
 
